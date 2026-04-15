@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FishHabr — UI Kit (Дизайн-библиотека)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Единая конфигурация проекта (Обязательно подключать на всех страницах)
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        nature: { 50: '#f2fbf5', 100: '#e1f6e8', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' },
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 selection:bg-nature-100 selection:text-nature-900 transition-colors duration-300 p-8">
+
+    <div class="max-w-5xl mx-auto space-y-12">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">FishHabr UI Kit</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2">Базовые компоненты интерфейса</p>
+            </div>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium transition-colors">
+                Переключить тему
+            </button>
+        </div>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">1. Типографика</h2>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-4">
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Заголовок H1 (text-3xl font-bold)</h1>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Заголовок H2 (text-2xl font-bold)</h2>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Заголовок H3 (text-xl font-bold)</h3>
+                <p class="text-base text-slate-600 dark:text-slate-300">Основной текст абзаца (text-base text-slate-600). Используется для написания статей и длинных описаний. Легко читается.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Вспомогательный текст (text-sm text-slate-500). Для дат, подписей и второстепенной информации.</p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">2. Кнопки (Buttons)</h2>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 flex flex-wrap gap-4 items-center">
+                
+                <button class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-nature-600 hover:bg-nature-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-nature-500 transition-all dark:focus:ring-offset-darkCard">
+                    Основная кнопка
+                </button>
+
+                <button class="inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-500 text-sm font-medium rounded-xl transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 dark:focus:ring-offset-darkCard">
+                    Второстепенная
+                </button>
+
+                <button class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors focus:outline-none">
+                    Прозрачная кнопка
+                </button>
+
+                <button class="inline-flex items-center justify-center px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-sm font-medium rounded-xl transition-colors focus:outline-none">
+                    Деструктивное действие
+                </button>
+
+                <button disabled class="inline-flex items-center justify-center px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-sm font-medium rounded-xl cursor-not-allowed border border-transparent">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Недоступно
+                </button>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">3. Элементы форм (Forms)</h2>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-6 max-w-md">
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Имя пользователя</label>
+                    <input type="text" placeholder="Введите имя..." class="block w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white">
+                </div>
+
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <input type="text" placeholder="Поиск..." class="block w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">О себе</label>
+                    <textarea rows="3" placeholder="Расскажите о своем опыте..." class="block w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white resize-none"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">4. Теги и статусы (Badges & Tags)</h2>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 flex flex-wrap gap-4 items-center">
+                
+                <span class="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-100 dark:border-slate-700 hover:border-nature-300 hover:text-nature-600 cursor-pointer transition-colors">
+                    #Эхолокация
+                </span>
+
+                <span class="px-2.5 py-1 rounded-full bg-nature-50 dark:bg-nature-900/20 text-nature-600 dark:text-nature-400 text-xs font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                    Одобрено
+                </span>
+
+                <span class="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 text-xs font-semibold">
+                    На модерации
+                </span>
+
+                <span class="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+                    Отклонено
+                </span>
+
+                <span class="bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    3
+                </span>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">5. Карточки (Cards)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 p-6">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Базовая карточка</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Универсальный контейнер для виджетов в сайдбаре, профиля или настроек. Использует скругление `rounded-2xl` и легкую рамку.</p>
+                </div>
+
+                <div class="bg-gradient-to-br from-nature-50 to-white dark:from-darkCard dark:to-slate-800 rounded-2xl shadow-sm border border-nature-100 dark:border-slate-700 p-6">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-2">Акцентная карточка</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Используется для призывов к действию (Напишите статью, Пройдите опрос) для привлечения внимания.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4 pb-12">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">6. Навигация (Tabs)</h2>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+                <div class="flex items-center border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex gap-6">
+                        <button class="text-sm font-semibold text-nature-600 dark:text-nature-500 border-b-2 border-nature-600 dark:border-nature-500 pb-3 -mb-[1px]">Активная вкладка</button>
+                        <button class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition pb-3 border-b-2 border-transparent">Обычная вкладка</button>
+                        <button class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition pb-3 border-b-2 border-transparent flex items-center gap-1.5">
+                            Вкладка с числом
+                            <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs px-1.5 py-0.5 rounded">12</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модерация: Сплав по таежной реке — FishHabr</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        nature: { 50: '#f2fbf5', 100: '#e1f6e8', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Анимация появления ветки */
+        .thread-enter { animation: slideDown 0.2s ease-out forwards; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 selection:bg-nature-100 selection:text-nature-900 transition-colors duration-300">
+
+    <header class="bg-white/90 dark:bg-darkCard/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/80 sticky top-0 z-50 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8 shrink-0">
+                <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white tracking-tight group">
+                    <svg class="w-8 h-8 text-nature-600 dark:text-nature-500 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    FishHabr
+                </a>
+            </div>
+            
+            <div class="flex-1 text-center hidden md:block">
+                <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-amber-200 dark:border-amber-700/50">
+                    Режим модерации
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                <div class="relative ml-1">
+                    <img id="user-btn" class="h-9 w-9 rounded-full object-cover ring-2 ring-transparent cursor-pointer" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Аватар">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <div class="mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
+            <nav class="flex text-sm text-slate-500 dark:text-slate-400 mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-2">
+                    <li class="inline-flex items-center">
+                        <a href="#" class="hover:text-nature-600 transition-colors">Очередь модерации</a>
+                    </li>
+                    <li><span class="mx-1">/</span></li>
+                    <li class="text-slate-900 dark:text-white font-medium" aria-current="page">Статья #4920</li>
+                </ol>
+            </nav>
+            
+            <div class="flex justify-between items-start gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Сплав по таежной реке: подготовка лодки...</h1>
+                    <div class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1.5">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-5 h-5 rounded-full bg-slate-200" alt="Avatar">
+                            Михаил Волков (Рейтинг: 850)
+                        </span>
+                        <span>•</span>
+                        <span>Отправлено вчера, 20:45</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 flex flex-col items-end shadow-sm">
+                    <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Голоса модераторов</span>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-nature-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-nature-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                        <span class="ml-2 font-bold text-slate-900 dark:text-white text-sm">2 / 5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <article class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 py-10 px-4 sm:px-12 relative">
+            
+            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-8 text-sm text-slate-600 dark:text-slate-400 flex items-start gap-3">
+                <svg class="w-5 h-5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p>Наведите курсор на любой абзац, чтобы оставить замечание к конкретному блоку текста. Это создаст новую ветку обсуждения.</p>
+            </div>
+
+            <div class="group flex relative py-3 -mx-4 px-4 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors rounded-xl">
+                <div class="w-12 shrink-0 flex justify-center pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="w-7 h-7 rounded bg-nature-100 dark:bg-nature-900/50 text-nature-600 dark:text-nature-400 flex items-center justify-center hover:bg-nature-200 transition border border-nature-200 dark:border-nature-700" title="Добавить ветку">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </div>
+                <div class="flex-1 text-lg text-slate-800 dark:text-slate-200 leading-relaxed">
+                    Планирование автономного похода на несколько дней требует особого подхода к сборке вещей. В этой статье я не буду рассказывать про то, на какие блесны ловить. Мы поговорим о безопасности, правильном распределении веса в ПВХ-лодке, выборе места для стоянки и защите провизии.
+                </div>
+            </div>
+
+            <div class="group flex relative py-3 -mx-4 px-4 bg-nature-50/30 dark:bg-nature-900/10 transition-colors rounded-xl mt-2 flex-wrap">
+                <div class="w-12 shrink-0 flex justify-center pt-1 opacity-100">
+                    <div class="w-7 h-7 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-500 flex items-center justify-center border border-amber-200 dark:border-amber-700" title="Открытая ветка">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    </div>
+                </div>
+                
+                <div class="flex-1 text-lg text-slate-800 dark:text-slate-200 leading-relaxed">
+                    Самая частая ошибка новичков — свалить весь тяжелый груз (бензин, воду, палатки) на корму поближе к рулевому. При выходе на глиссирование лодка начинает "кобрить", а управляемость падает до нуля.
+                </div>
+
+                <div class="w-full pl-12 mt-4 thread-enter">
+                    <div class="bg-white dark:bg-darkCard border border-amber-200 dark:border-amber-700/50 shadow-sm rounded-xl overflow-hidden relative">
+                        
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-700/50 px-4 py-2 flex justify-between items-center">
+                            <span class="text-xs font-bold text-amber-800 dark:text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                Ветка требует решения
+                            </span>
+                            <button class="text-xs px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-nature-500 hover:text-nature-600 dark:hover:text-nature-400 rounded-lg font-medium transition shadow-sm flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Закрыть ветку
+                            </button>
+                        </div>
+
+                        <div class="p-4 space-y-5">
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-nature-100 text-nature-700 flex items-center justify-center font-bold text-sm shrink-0">М1</div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-bold text-sm text-slate-900 dark:text-white">Модератор #1</span>
+                                        <span class="text-xs text-slate-400">Сегодня, 10:15</span>
+                                    </div>
+                                    <p class="text-sm text-slate-700 dark:text-slate-300">Слово "кобрить" может быть непонятно новичкам. Стоит добавить краткое пояснение в скобках или сноску.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-8 h-8 rounded-full bg-slate-200 shrink-0" alt="Avatar">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-bold text-sm text-slate-900 dark:text-white">Михаил Волков</span>
+                                        <span class="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Автор</span>
+                                        <span class="text-xs text-slate-400">Сегодня, 11:30</span>
+                                    </div>
+                                    <p class="text-sm text-slate-700 dark:text-slate-300">Да, согласен. Я добавлю сноску в следующем абзаце.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-3 flex gap-3 items-end">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 mb-0.5 text-xs">Вы</div>
+                            <div class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-end pr-2 overflow-hidden focus-within:border-nature-500 focus-within:ring-1 focus-within:ring-nature-500 transition-all">
+                                <textarea rows="1" placeholder="Ответить в ветке (только текст)..." class="w-full bg-transparent border-none focus:ring-0 resize-none py-2.5 px-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none max-h-32"></textarea>
+                                <button class="p-2 text-nature-600 hover:text-nature-700 dark:text-nature-500 mb-0.5 transition-colors" title="Отправить">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group flex relative py-3 -mx-4 px-4 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors rounded-xl mt-2 flex-wrap">
+                <div class="w-12 shrink-0 flex justify-center pt-1 opacity-100">
+                    <div class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-800 text-nature-500 flex items-center justify-center border border-slate-200 dark:border-slate-700" title="Ветка решена">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                </div>
+                <div class="flex-1 text-lg text-slate-800 dark:text-slate-200 leading-relaxed">
+                    Правило простое: самые тяжелые вещи должны располагаться максимально близко к центру тяжести лодки, желательно смещая их чуть в нос для компенсации веса мотора и шкипера.
+                </div>
+                
+                <div class="w-full pl-12 mt-2">
+                    <button class="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        Показать решенную ветку (2 комментария)
+                    </button>
+                </div>
+            </div>
+
+        </article>
+
+        <section class="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner mt-12">
+            <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Вердикт модератора</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">В статье осталась 1 открытая ветка. Убедитесь, что все критические замечания исправлены перед одобрением.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+                <button onclick="openModal('reject-modal')" class="w-full sm:w-auto px-6 py-3 bg-white dark:bg-darkCard border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 font-bold rounded-xl transition shadow-sm">
+                    Отклонить статью
+                </button>
+                <button onclick="openModal('approve-modal')" class="w-full sm:w-auto px-6 py-3 bg-nature-600 hover:bg-nature-700 text-white font-bold rounded-xl transition shadow-sm">
+                    Одобрить публикацию
+                </button>
+            </div>
+        </section>
+
+        <section class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 p-6 sm:p-10">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Общие комментарии к модерации</h2>
+            
+            <div class="border-t border-slate-100 dark:border-slate-700/60 pt-6">
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-sm shrink-0">Вы</div>
+                    <div class="flex-1">
+                        <textarea rows="2" placeholder="Оставить общий комментарий автору..." class="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white resize-y mb-3"></textarea>
+                        <div class="flex justify-end">
+                            <button class="px-5 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-medium rounded-lg hover:bg-slate-900 dark:hover:bg-slate-600 transition">
+                                Отправить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="approve-modal" class="fixed inset-0 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="approve-modal-content">
+            <div class="p-6 text-center pt-8">
+                <div class="w-16 h-16 bg-nature-100 dark:bg-nature-900/30 text-nature-600 dark:text-nature-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Одобрить статью?</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Вы уверены, что статья готова к публикации? В ней еще есть открытые ветки замечаний.</p>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeModal('approve-modal')" class="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                        Нет, отмена
+                    </button>
+                    <button class="flex-1 px-4 py-2.5 bg-nature-600 hover:bg-nature-700 text-white font-medium rounded-xl transition shadow-sm">
+                        Да, одобрить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reject-modal" class="fixed inset-0 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="reject-modal-content">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white">Отклонение публикации</h3>
+                <button onclick="closeModal('reject-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Причина отклонения <span class="text-rose-500">*</span></label>
+                <textarea rows="4" placeholder="Укажите подробную причину, чтобы автор мог исправить статью..." class="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all text-slate-900 dark:text-white resize-y mb-6"></textarea>
+                
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeModal('reject-modal')" class="px-5 py-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition">
+                        Отмена
+                    </button>
+                    <button class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition shadow-sm">
+                        Отправить отклонение
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Логика модальных окон
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.remove('hidden');
+            // Маленькая задержка для запуска анимации opacity/scale
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+            document.body.style.overflow = 'hidden'; // Запрет скролла
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            // Ждем завершения анимации перед скрытием
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+            document.body.style.overflow = '';
+        }
+
+        // Закрытие по клику вне контента
+        document.getElementById('approve-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal('approve-modal');
+        });
+        document.getElementById('reject-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal('reject-modal');
+        });
+    </script>
+</body>
+</html>

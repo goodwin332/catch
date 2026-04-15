@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сплав по таежной реке — FishHabr</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        nature: { 50: '#f2fbf5', 100: '#e1f6e8', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Стили для контента статьи */
+        .article-content p { margin-bottom: 1.5rem; line-height: 1.8; }
+        .article-content h3 { font-size: 1.5rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1.25rem; color: inherit; }
+        .article-content blockquote { border-left: 4px solid #059669; padding-left: 1.5rem; font-style: italic; color: #64748b; margin-bottom: 1.5rem; background: rgba(16, 185, 129, 0.05); padding: 1.5rem; border-radius: 0 0.5rem 0.5rem 0; }
+        .dark .article-content blockquote { color: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 selection:bg-nature-100 selection:text-nature-900 transition-colors duration-300">
+
+    <header class="bg-white/90 dark:bg-darkCard/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/80 sticky top-0 z-50 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <div class="flex items-center gap-8 shrink-0">
+                <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white tracking-tight group">
+                    <svg class="w-8 h-8 text-nature-600 dark:text-nature-500 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    FishHabr
+                </a>
+            </div>
+
+            <div class="flex-1 max-w-3xl mx-8 relative hidden md:block group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-slate-400 group-focus-within:text-nature-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" placeholder="Поиск статей, #тегов или @авторов..." class="block w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white">
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                <button class="hidden sm:inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-nature-600 hover:bg-nature-700 shadow-sm focus:outline-none transition-all">
+                    Написать статью
+                </button>
+
+                <div class="relative pl-2 border-l border-slate-200 dark:border-slate-700">
+                    <button id="notif-btn" class="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span class="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-darkCard"></span>
+                    </button>
+
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden transform transition-all z-50">
+                        <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Уведомления</h3>
+                            <button class="text-xs text-nature-600 dark:text-nature-400 hover:underline">Прочитать все</button>
+                        </div>
+                        <div class="max-h-[300px] overflow-y-auto no-scrollbar">
+                            <a href="#" class="block px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-nature-50/50 dark:bg-nature-900/10">
+                                <p class="text-sm text-slate-800 dark:text-slate-200">
+                                    В статье <span class="font-semibold">"Сплав по таежн..."</span> новые комментарии (3).
+                                </p>
+                                <span class="text-xs text-nature-600 mt-1 block">1 час назад</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative ml-1">
+                    <img id="user-btn" class="h-9 w-9 rounded-full object-cover ring-2 ring-transparent hover:ring-nature-200 dark:hover:ring-nature-700 cursor-pointer transition-all" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fisher" alt="Аватар">
+                    
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50">
+                        <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-700 mb-1">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">Иван Рыбаков</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Рейтинг: 1250</p>
+                        </div>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Мой профиль</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Мои статьи</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Закладки</a>
+                        
+                        <div class="border-t border-slate-100 dark:border-slate-700 mt-1 pt-1">
+                            <button id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between">
+                                Тема оформления
+                                <svg id="theme-icon-light" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                <svg id="theme-icon-dark" class="w-4 h-4 text-slate-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                            </button>
+                            <a href="#" class="block px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors">Выйти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <article class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 overflow-hidden">
+            
+            <div class="h-64 sm:h-80 md:h-[500px] w-full bg-slate-200 dark:bg-slate-800 relative">
+                <img src="https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1600&q=80" alt="Сплав по реке" class="w-full h-full object-cover">
+            </div>
+
+            <div class="p-6 sm:p-10 lg:p-16">
+                
+                <header class="mb-8">
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <span class="px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-nature-300 transition">#Экспедиции</span>
+                        <span class="px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-nature-300 transition">#Лодки ПВХ</span>
+                    </div>
+
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-8">
+                        Сплав по таежной реке: подготовка лодки, снаряжения и организация лагеря
+                    </h1>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Автор" class="w-12 h-12 rounded-full bg-slate-100 ring-1 ring-slate-200 dark:ring-slate-700">
+                            <div>
+                                <a href="#" class="font-semibold text-slate-900 dark:text-white hover:text-nature-600 transition">Михаил Волков</a>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Вчера, 08:30</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-5 text-sm text-slate-500 dark:text-slate-400">
+                            <span class="flex items-center gap-1.5" title="Просмотры">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                4.2k
+                            </span>
+                            <button class="flex items-center hover:text-nature-600 transition" title="В закладки">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="article-content text-lg text-slate-800 dark:text-slate-200">
+                    <p>Планирование автономного похода на несколько дней требует особого подхода к сборке вещей. В этой статье я не буду рассказывать про то, на какие блесны ловить. Мы поговорим о безопасности, правильном распределении веса в ПВХ-лодке, выборе места для стоянки и защите провизии от диких животных.</p>
+                    
+                    <h3>1. Распределение веса в лодке</h3>
+                    <p>Самая частая ошибка новичков — свалить весь тяжелый груз (бензин, воду, палатки) на корму поближе к рулевому. При выходе на глиссирование лодка начинает "кобрить", а управляемость падает до нуля.</p>
+
+                    <blockquote>
+                        Правило простое: самые тяжелые вещи (канистры с топливом, питьевая вода) должны располагаться максимально близко к центру тяжести лодки, желательно смещая их чуть в нос для компенсации веса мотора и шкипера.
+                    </blockquote>
+
+                    <figure class="my-10 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
+                        <img src="https://images.unsplash.com/photo-1520208422220-d12a3c588e6c?auto=format&fit=crop&w=1600&q=80" alt="Правильная загрузка лодки" class="w-full">
+                        <figcaption class="text-sm text-center text-slate-500 py-3 bg-slate-50 dark:bg-slate-800/50">Правильная укладка гермомешков в носовой части ПВХ лодки.</figcaption>
+                    </figure>
+
+                    <h3>2. Выбор места для лагеря</h3>
+                    <p>Искать место для ночлега нужно начинать минимум за 2 часа до заката. На таежных реках береговая линия часто завалена топляком или представляет собой обрывистый яр. Нас интересуют песчаные или галечные косы на внутренних радиусах поворотов реки — там слабее течение и удобнее швартоваться.</p>
+                    <p>Обязательно проверяйте следы диких животных перед тем, как ставить палатку. Если рядом проходит натоптанная звериная тропа к водопою — лучше пройти еще пару километров вниз по течению.</p>
+                </div>
+
+                <footer class="mt-16 pt-8 border-t border-slate-100 dark:border-slate-700/60">
+                    <div class="flex flex-col md:flex-row items-center justify-between bg-slate-50 dark:bg-slate-800/30 p-6 rounded-xl mb-8 gap-4">
+                        <div class="flex items-center gap-4">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Автор" class="w-14 h-14 rounded-full bg-white dark:bg-slate-700 shadow-sm">
+                            <div>
+                                <div class="text-lg font-bold text-slate-900 dark:text-white">Михаил Волков</div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">Рейтинг: <span class="font-semibold text-slate-700 dark:text-slate-300">8500</span> • Лодка: Волжанка 46</div>
+                            </div>
+                        </div>
+                        <button class="w-full md:w-auto px-6 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-nature-600 hover:border-nature-300 transition shadow-sm">
+                            Подписаться на автора
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 bg-white dark:bg-darkCard rounded-xl p-1.5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <button class="p-2.5 text-slate-500 hover:text-nature-600 hover:bg-nature-50 dark:hover:bg-slate-800 rounded-lg transition" title="Оценить положительно">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                            <span class="font-bold text-nature-600 dark:text-nature-500 px-4 text-xl flex items-center gap-2">
+                                +342
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            </span>
+                            <button class="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition" title="Оценить отрицательно">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button class="p-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-50 dark:bg-slate-800 rounded-xl transition" title="Поделиться">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            </button>
+                            <button class="p-3 text-slate-400 hover:text-rose-500 bg-slate-50 dark:bg-slate-800 rounded-xl transition" title="Пожаловаться на статью">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </footer>
+
+            </div>
+        </article>
+
+        <section id="comments" class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 p-6 sm:p-10 lg:p-16">
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-10">Комментарии <span class="text-slate-400 text-xl font-normal ml-2">2</span></h2>
+
+            <div class="space-y-10 mb-12">
+                <div class="group">
+                    <div class="flex gap-5">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Pavel" alt="Аватар" class="w-12 h-12 rounded-full bg-slate-100 shrink-0">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <a href="#" class="font-bold text-slate-900 dark:text-white hover:text-nature-600 transition">Павел Смирнов</a>
+                                <span class="text-sm text-slate-400">Вчера, 14:20</span>
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-3">
+                                Отличная статья! А как вы решали проблему с дикими животными? Использовали фальшфейеры или просто продукты подвешивали?
+                            </p>
+                            <div class="flex items-center gap-5 text-sm font-medium text-slate-400">
+                                <button class="hover:text-slate-700 dark:hover:text-slate-200 transition">Ответить</button>
+                                <button class="hover:text-slate-700 dark:hover:text-slate-200 transition" title="Скопировать ссылку"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg></button>
+                                <button class="hover:text-rose-500 transition opacity-0 group-hover:opacity-100" title="Пожаловаться"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>
+                                
+                                <div class="ml-auto flex items-center gap-3">
+                                    <button class="hover:text-nature-600 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                    <span class="text-slate-600 dark:text-slate-300 font-bold">+5</span>
+                                    <button class="hover:text-rose-500 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ml-8 md:ml-16 pl-6 border-l-2 border-slate-100 dark:border-slate-700 mt-8 group">
+                        <div class="flex gap-5">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Аватар" class="w-10 h-10 rounded-full bg-slate-100 ring-2 ring-nature-500 shrink-0">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <a href="#" class="font-bold text-slate-900 dark:text-white hover:text-nature-600 transition">Михаил Волков</a>
+                                    <span class="bg-nature-100 dark:bg-nature-900/30 text-nature-700 dark:text-nature-400 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">Автор</span>
+                                    <span class="text-sm text-slate-400">Вчера, 15:05</span>
+                                </div>
+                                <p class="text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-3">
+                                    Продукты в гермомешках оттаскивали метров на 100 от лагеря и подвешивали на дерево. Фальшфейеры были, но к счастью не пригодились. Медвежьи следы видели только один раз.
+                                </p>
+                                <div class="flex items-center gap-5 text-sm font-medium text-slate-400">
+                                    <button class="hover:text-slate-700 dark:hover:text-slate-200 transition">Ответить</button>
+                                    <button class="hover:text-slate-700 dark:hover:text-slate-200 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg></button>
+                                    <button class="hover:text-rose-500 transition opacity-0 group-hover:opacity-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>
+                                    
+                                    <div class="ml-auto flex items-center gap-3">
+                                        <button class="hover:text-nature-600 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                        <span class="text-slate-600 dark:text-slate-300 font-bold">+12</span>
+                                        <button class="hover:text-rose-500 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 pt-10 border-t border-slate-100 dark:border-slate-700/60 flex gap-5">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fisher" alt="Ваш аватар" class="w-12 h-12 rounded-full shrink-0 mt-1">
+                <div class="flex-1">
+                    <textarea rows="3" placeholder="Написать комментарий..." class="block w-full px-5 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 text-base transition-all text-slate-900 dark:text-white resize-y mb-4"></textarea>
+                    <div class="flex justify-end">
+                        <button class="px-6 py-3 bg-nature-600 hover:bg-nature-700 text-white text-base font-medium rounded-xl transition-colors shadow-sm">
+                            Отправить комментарий
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-16">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-8">Похожие статьи</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <a href="#" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-slate-700/60 overflow-hidden hover:shadow-md transition-all group block">
+                    <div class="h-40 bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Лодка">
+                    </div>
+                    <div class="p-5">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-lg mb-3 leading-tight group-hover:text-nature-600 transition line-clamp-2">Выбор мотора 9.9: Yamaha против Tohatsu</h4>
+                        <div class="text-sm text-slate-500 flex justify-between items-center mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                            <span>Олег Моторкин</span>
+                            <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> 2.4k</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="#" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-slate-700/60 overflow-hidden hover:shadow-md transition-all group block">
+                    <div class="p-5 flex flex-col h-full">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-lg mb-3 leading-tight group-hover:text-nature-600 transition line-clamp-2">Собираем походную аптечку: что реально нужно на реке</h4>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mb-4 flex-1">Разбираем состав аптечки для автономного похода. Никаких лишних таблеток, только то, что спасет жизнь вдали от цивилизации...</p>
+                        <div class="text-sm text-slate-500 flex justify-between items-center border-t border-slate-100 dark:border-slate-700/50 pt-4 mt-auto">
+                            <span>Анна Врач</span>
+                            <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> 1.8k</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="#" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-slate-700/60 overflow-hidden hover:shadow-md transition-all group block">
+                    <div class="h-40 bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1504280741564-96940a45bd49?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Палатка">
+                    </div>
+                    <div class="p-5">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-lg mb-3 leading-tight group-hover:text-nature-600 transition line-clamp-2">Обзор зимней палатки Лотос 3: плюсы и минусы</h4>
+                        <div class="text-sm text-slate-500 flex justify-between items-center mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                            <span>Зимний Лис</span>
+                            <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> 5.1k</span>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+        
+        <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-700 text-center text-slate-500">
+            © 2026 FishHabr
+        </footer>
+
+    </main>
+
+    <script>
+        // Меню
+        const notifBtn = document.getElementById('notif-btn');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        const userBtn = document.getElementById('user-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+
+        function toggleDropdown(btn, dropdown) {
+            dropdown.classList.toggle('hidden');
+        }
+
+        notifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.add('hidden');
+            toggleDropdown(notifBtn, notifDropdown);
+        });
+
+        userBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.add('hidden');
+            toggleDropdown(userBtn, userDropdown);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                notifDropdown.classList.add('hidden');
+            }
+            if (!userDropdown.contains(e.target) && e.target !== userBtn) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Тема
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIconLight = document.getElementById('theme-icon-light');
+        const themeIconDark = document.getElementById('theme-icon-dark');
+
+        function updateThemeIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeIconLight.classList.add('hidden');
+                themeIconDark.classList.remove('hidden');
+            } else {
+                themeIconDark.classList.add('hidden');
+                themeIconLight.classList.remove('hidden');
+            }
+        }
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+        updateThemeIcons();
+
+        themeToggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                localStorage.setItem('color-theme', 'light');
+            }
+            updateThemeIcons();
+        });
+    </script>
+</body>
+</html>

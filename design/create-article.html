@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Написать статью — FishHabr</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        nature: { 50: '#f2fbf5', 100: '#e1f6e8', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #475569; }
+        
+        /* Стили редактора (чтобы текст выглядел как в готовой статье) */
+        .editor-content p { margin-bottom: 1.5rem; line-height: 1.8; }
+        .editor-content h2, .editor-content h3 { color: inherit; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; }
+        .editor-content h2 { font-size: 1.875rem; }
+        .editor-content h3 { font-size: 1.5rem; }
+        .editor-content blockquote { border-left: 4px solid #059669; padding-left: 1.5rem; font-style: italic; color: #64748b; margin-bottom: 1.5rem; background: rgba(16, 185, 129, 0.05); padding: 1.5rem; border-radius: 0 0.5rem 0.5rem 0; }
+        .dark .editor-content blockquote { color: #94a3b8; }
+        .editor-content [contenteditable]:empty:before { content: attr(placeholder); color: #94a3b8; pointer-events: none; display: block; }
+        .dark .editor-content [contenteditable]:empty:before { color: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 selection:bg-nature-100 selection:text-nature-900 transition-colors duration-300 flex flex-col min-h-screen">
+
+    <header class="bg-white/90 dark:bg-darkCard/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/80 sticky top-0 z-50 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <div class="flex items-center gap-8 shrink-0">
+                <a href="#" class="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white tracking-tight group">
+                    <svg class="w-8 h-8 text-nature-600 dark:text-nature-500 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    FishHabr
+                </a>
+            </div>
+
+            <div class="flex-1 max-w-3xl mx-8 relative hidden md:block group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-slate-400 group-focus-within:text-nature-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" placeholder="Поиск статей, #тегов или @авторов..." class="block w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-nature-500/20 focus:border-nature-500 sm:text-sm transition-all text-slate-900 dark:text-white">
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                
+                <button class="hidden sm:inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-nature-600 hover:bg-nature-700 shadow-sm focus:outline-none transition-all">
+                    Написать статью
+                </button>
+
+                <div class="relative pl-2 border-l border-slate-200 dark:border-slate-700">
+                    <button id="notif-btn" class="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span class="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-darkCard"></span>
+                    </button>
+
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden transform opacity-100 scale-100 transition-all z-50">
+                        <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Уведомления</h3>
+                            <button class="text-xs text-nature-600 dark:text-nature-400 hover:underline">Прочитать все</button>
+                        </div>
+                        <div class="max-h-[300px] overflow-y-auto no-scrollbar">
+                            <a href="#" class="block px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                <p class="text-sm text-slate-800 dark:text-slate-200">
+                                    Ваша статья <span class="font-semibold">"Выбор эхолота..."</span> прошла модерацию.
+                                </p>
+                                <span class="text-xs text-slate-400 mt-1 block">5 минут назад</span>
+                            </a>
+                            <a href="#" class="block px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-nature-50/50 dark:bg-nature-900/10">
+                                <p class="text-sm text-slate-800 dark:text-slate-200">
+                                    В статье <span class="font-semibold">"Сплав по таежн..."</span> новые комментарии (3).
+                                </p>
+                                <span class="text-xs text-nature-600 mt-1 block">1 час назад</span>
+                            </a>
+                            <a href="#" class="block px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                <p class="text-sm text-slate-800 dark:text-slate-200">
+                                    Пользователь <span class="font-semibold">WinterFox</span> написал вам сообщение.
+                                </p>
+                                <span class="text-xs text-slate-400 mt-1 block">Вчера</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative ml-1">
+                    <img id="user-btn" class="h-9 w-9 rounded-full object-cover ring-2 ring-transparent hover:ring-nature-200 dark:hover:ring-nature-700 cursor-pointer transition-all" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fisher" alt="Аватар">
+                    
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50">
+                        <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-700 mb-1">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">Иван Рыбаков</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Рейтинг: 1250</p>
+                        </div>
+                        
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Мой профиль</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Мои статьи</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex justify-between">Закладки <span class="bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs px-1.5 rounded">12</span></a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Чат <span class="text-rose-500 text-xs font-bold ml-1">•</span></a>
+                        <a href="#" class="block px-4 py-2 text-sm text-nature-600 dark:text-nature-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Модерация</a>
+                        
+                        <div class="border-t border-slate-100 dark:border-slate-700 mt-1 pt-1">
+                            <button id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between">
+                                Тема оформления
+                                <svg id="theme-icon-light" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                <svg id="theme-icon-dark" class="w-4 h-4 text-slate-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                            </button>
+                            <a href="#" class="block px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors">Выйти</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <div class="sticky top-16 z-40 bg-white/95 dark:bg-darkCard/95 backdrop-blur shadow-sm border-b border-slate-200 dark:border-slate-700/80 transition-colors">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 overflow-x-auto no-scrollbar">
+            
+            <div class="flex items-center gap-1 shrink-0">
+                <button class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition" title="Жирный (Ctrl+B)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"></path></svg>
+                </button>
+                <button class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition" title="Курсив (Ctrl+I)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </button>
+                <button class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition" title="Заголовок">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+                <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                
+                <button class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition" title="Маркированный список">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <button class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition" title="Цитата">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                </button>
+                <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
+
+                <button class="p-2 text-slate-500 hover:text-nature-600 dark:hover:text-nature-400 hover:bg-nature-50 dark:hover:bg-slate-800 rounded-lg transition" title="Вставить изображение">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+                
+                <button class="p-2 text-slate-500 hover:text-nature-600 dark:hover:text-nature-400 hover:bg-nature-50 dark:hover:bg-slate-800 rounded-lg transition flex items-center gap-1.5" title="Добавить геоточку">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="text-xs font-medium hidden sm:inline">Точка</span>
+                </button>
+
+                <button class="p-2 text-slate-500 hover:text-nature-600 dark:hover:text-nature-400 hover:bg-nature-50 dark:hover:bg-slate-800 rounded-lg transition flex items-center gap-1.5" title="Добавить маршрут или трек">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                    <span class="text-xs font-medium hidden sm:inline">Маршрут</span>
+                </button>
+            </div>
+
+            <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg shrink-0">
+                <button class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition">Редактор</button>
+                <button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Предпросмотр</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+        
+        <div class="group relative w-full h-48 sm:h-64 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-nature-500 dark:hover:border-nature-500 bg-slate-50 dark:bg-slate-900/50 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden">
+            <div class="text-center z-10 p-4 group-hover:scale-105 transition-transform">
+                <div class="w-12 h-12 bg-white dark:bg-darkCard rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-nature-600 dark:text-nature-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Загрузить обложку статьи</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Рекомендуемый размер 1200x600px. JPG, PNG</p>
+            </div>
+        </div>
+
+        <div>
+            <textarea rows="1" placeholder="Заголовок статьи..." class="w-full text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none resize-none placeholder-slate-300 dark:placeholder-slate-600 py-2 leading-tight overflow-hidden" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-4">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+            <div class="flex flex-wrap gap-2 flex-1">
+                <span class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium flex items-center gap-1.5">
+                    Экспедиции
+                    <button class="text-slate-400 hover:text-rose-500 focus:outline-none"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </span>
+                <input type="text" placeholder="Добавить теги через запятую..." class="bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 min-w-[200px] flex-1">
+            </div>
+        </div>
+
+        <div class="editor-content text-lg text-slate-800 dark:text-slate-200 min-h-[500px]">
+            <div contenteditable="true" class="outline-none" placeholder="Начните писать вашу историю здесь...">
+                <p>Планирование автономного похода на несколько дней требует особого подхода к сборке вещей. В этой статье я не буду рассказывать про то, на какие блесны ловить. Мы поговорим о безопасности, правильном распределении веса в ПВХ-лодке, выборе места для стоянки и защите провизии от диких животных.</p>
+                
+                <h3>Выбор маршрута</h3>
+                <p>Наш маршрут пролегал по одной из самых живописных таежных рек. Я прикрепил точный трек ниже, чтобы вы могли оценить сложность порогов и места удобных стоянок.</p>
+                
+                <div contenteditable="false" class="my-8 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden relative group select-none">
+                    <div class="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button class="w-8 h-8 rounded-lg bg-white dark:bg-darkCard shadow-sm flex items-center justify-center text-slate-500 hover:text-nature-600 border border-slate-200 dark:border-slate-700"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button class="w-8 h-8 rounded-lg bg-white dark:bg-darkCard shadow-sm flex items-center justify-center text-slate-500 hover:text-rose-500 border border-slate-200 dark:border-slate-700"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                    <div class="h-48 w-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center relative">
+                        <div class="absolute inset-0 bg-slate-900/40"></div>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                            <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            <span class="font-bold text-lg shadow-sm">Маршрут: Река Вишера (110 км)</span>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3 bg-white dark:bg-darkCard flex justify-between items-center text-sm border-t border-slate-200 dark:border-slate-700">
+                        <span class="text-slate-500 font-medium flex items-center gap-2"><svg class="w-4 h-4 text-nature-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Сложность: Средняя</span>
+                        <a href="#" class="text-nature-600 dark:text-nature-400 font-medium hover:underline">Скачать GPX трек</a>
+                    </div>
+                </div>
+
+                <p><br></p> </div>
+        </div>
+
+    </main>
+
+    <div class="sticky bottom-0 z-50 bg-white/95 dark:bg-darkCard/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-colors py-4 px-4 sm:px-6">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button class="flex-1 sm:flex-none px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-sm text-sm">
+                    Сохранить
+                </button>
+                <button class="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 font-medium rounded-xl transition shadow-sm text-sm">
+                    В архив
+                </button>
+                <span class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 ml-2">
+                    <svg class="w-3.5 h-3.5 text-nature-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Черновик сохранен 12:45
+                </span>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button class="flex-1 sm:flex-none px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition shadow-sm text-sm flex justify-center items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    На модерацию
+                </button>
+                
+                <button class="flex-1 sm:flex-none px-6 py-2.5 bg-nature-600 hover:bg-nature-700 text-white font-bold rounded-xl transition shadow-sm text-sm">
+                    Опубликовать
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Инициализация темы
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>
