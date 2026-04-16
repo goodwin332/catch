@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+bin/
+dist/
+build/
+coverage/
+
+.DS_Store
+
+node_modules/
+.next/
+
+*.log
+
+var/

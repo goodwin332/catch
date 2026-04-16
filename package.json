@@ -1,0 +1,16 @@
+{
+  "name": "catch",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "api:types": "openapi-typescript apps/api/openapi/openapi.yaml -o apps/web/src/lib/api-types.ts",
+    "web:dev": "npm --workspace apps/web run dev",
+    "web:build": "npm --workspace apps/web run build",
+    "web:lint": "npm --workspace apps/web run lint"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0"
+  }
+}

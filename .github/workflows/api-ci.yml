@@ -1,0 +1,85 @@
+name: API CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  api:
+    name: Go API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: catch_test
+          POSTGRES_USER: catch
+          POSTGRES_PASSWORD: catch
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U catch -d catch_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Check formatting
+        working-directory: apps/api
+        run: test -z "$(gofmt -l .)"
+
+      - name: Test
+        working-directory: apps/api
+        run: go test ./...
+
+      - name: Vet
+        working-directory: apps/api
+        run: go vet ./...
+
+      - name: Integration tests
+        working-directory: apps/api
+        env:
+          TEST_DATABASE_URL: postgres://catch:catch@localhost:5432/catch_test?sslmode=disable
+        run: go test -tags=integration ./tests/integration
+
+      - name: Validate OpenAPI YAML
+        run: ruby -e 'require "yaml"; YAML.load_file("apps/api/openapi/openapi.yaml")'
+
+  web:
+    name: Next.js Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate API types
+        run: npm run api:types
+
+      - name: Check generated API types are committed
+        run: git diff --exit-code -- apps/web/src/lib/api-types.ts
+
+      - name: Typecheck
+        run: npm run web:lint
+
+      - name: Build
+        run: npm run web:build

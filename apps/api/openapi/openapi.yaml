@@ -1,0 +1,2603 @@
+openapi: 3.1.0
+info:
+  title: Catch API
+  version: 0.1.0
+  description: Backend contracts for Catch modular monolith.
+servers:
+  - url: /api/v1
+tags:
+  - name: System
+  - name: Auth
+  - name: Profile
+  - name: Articles
+  - name: Comments
+  - name: Reactions
+  - name: Bookmarks
+  - name: Reports
+  - name: Moderation
+  - name: Notifications
+  - name: Chat
+  - name: Media
+  - name: Dev
+paths:
+  /auth/email/request-code:
+    post:
+      tags: [Auth]
+      summary: Request email login or registration code
+      description: Always returns the same public response and does not disclose whether an email exists.
+      operationId: requestEmailCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestEmailCodeRequest"
+      responses:
+        "202":
+          description: Email code request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestEmailCodeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/email/verify:
+    post:
+      tags: [Auth]
+      summary: Verify email code and create session
+      operationId: verifyEmailCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailCodeRequest"
+      responses:
+        "200":
+          description: Authenticated user
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly session cookie.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      operationId: getCurrentUser
+      security:
+        - cookieSession: []
+      responses:
+        "200":
+          description: Current authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke current session
+      operationId: logout
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      responses:
+        "204":
+          description: Session revoked
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/oauth/{provider}/start:
+    get:
+      tags: [Auth]
+      summary: Start OAuth authorization
+      operationId: startOAuth
+      parameters:
+        - $ref: "#/components/parameters/OAuthProvider"
+        - name: return_to
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 512
+      responses:
+        "302":
+          description: Redirect to OAuth provider
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/oauth/{provider}/callback:
+    get:
+      tags: [Auth]
+      summary: Complete OAuth authorization
+      operationId: completeOAuth
+      parameters:
+        - $ref: "#/components/parameters/OAuthProvider"
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect back to web app with session cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly session cookie.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /dev/auth/login:
+    post:
+      tags: [Dev]
+      summary: Create local development session
+      description: Available only outside production when AUTH_DEV_LOGIN_ENABLED=true.
+      operationId: devLogin
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DevLoginRequest"
+      responses:
+        "200":
+          description: Authenticated dev user
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly session cookie.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /profile/me:
+    get:
+      tags: [Profile]
+      summary: Get private current user profile
+      operationId: getMyProfile
+      security:
+        - cookieSession: []
+      responses:
+        "200":
+          description: Private profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrivateProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [Profile]
+      summary: Update private current user profile
+      operationId: updateMyProfile
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyProfileRequest"
+      responses:
+        "200":
+          description: Updated private profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrivateProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /profiles/{username}:
+    get:
+      tags: [Profile]
+      summary: Get public profile by username
+      operationId: getPublicProfile
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 40
+      responses:
+        "200":
+          description: Public profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /search/people:
+    get:
+      tags: [Profile]
+      summary: Search public profiles by username or display name
+      operationId: searchPeople
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Matching public profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileSearch"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/drafts:
+    post:
+      tags: [Articles]
+      summary: Create article draft
+      operationId: createArticleDraft
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDraftRequest"
+      responses:
+        "201":
+          description: Created draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraft"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/my:
+    get:
+      tags: [Articles]
+      summary: List current user articles
+      operationId: listMyArticles
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: after_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Current user articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraftList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/drafts/{articleId}:
+    get:
+      tags: [Articles]
+      summary: Get own article draft
+      operationId: getArticleDraft
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      responses:
+        "200":
+          description: Article draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraft"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [Articles]
+      summary: Update own article draft and create new revision
+      operationId: updateArticleDraft
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDraftRequest"
+      responses:
+        "200":
+          description: Updated draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraft"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/drafts/{articleId}/submit:
+    post:
+      tags: [Articles]
+      summary: Submit draft for moderation or direct publication
+      operationId: submitArticleDraft
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitDraftRequest"
+      responses:
+        "200":
+          description: Submitted draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraft"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/{articleId}:
+    get:
+      tags: [Articles]
+      summary: Get published article
+      operationId: getPublishedArticle
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      responses:
+        "200":
+          description: Published article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicArticle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /feed:
+    get:
+      tags: [Articles]
+      summary: List published feed articles
+      operationId: listFeed
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Feed articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /feed/popular:
+    get:
+      tags: [Articles]
+      summary: List popular articles from the last 14 days
+      operationId: listPopularFeed
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Popular feed articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/feed:
+    get:
+      tags: [Articles]
+      summary: List personalized feed articles for current user
+      operationId: listMyFeed
+      security:
+        - cookieSession: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Personalized feed articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /search:
+    get:
+      tags: [Articles]
+      summary: Search published articles with PostgreSQL fallback search
+      operationId: searchArticles
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleList"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /articles/{articleId}/comments:
+    get:
+      tags: [Comments]
+      summary: List article comments
+      operationId: listArticleComments
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      responses:
+        "200":
+          description: Article comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [Comments]
+      summary: Create article comment
+      operationId: createArticleComment
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "201":
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /comments/{commentId}:
+    get:
+      tags: [Comments]
+      summary: Get comment by id
+      operationId: getComment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Comments]
+      summary: Edit own comment during edit window
+      operationId: updateComment
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommentRequest"
+      responses:
+        "200":
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /reactions:
+    post:
+      tags: [Reactions]
+      summary: Set or remove reaction
+      operationId: setReaction
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetReactionRequest"
+      responses:
+        "200":
+          description: Reaction state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /bookmarks/lists:
+    get:
+      tags: [Bookmarks]
+      summary: List bookmark lists
+      operationId: listBookmarkLists
+      security:
+        - cookieSession: []
+      responses:
+        "200":
+          description: Bookmark lists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkLists"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Bookmarks]
+      summary: Create bookmark list
+      operationId: createBookmarkList
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookmarkListRequest"
+      responses:
+        "201":
+          description: Created bookmark list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /bookmarks/items:
+    get:
+      tags: [Bookmarks]
+      summary: List bookmarked published articles
+      operationId: listBookmarkedArticles
+      security:
+        - cookieSession: []
+      parameters:
+        - name: list_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Bookmarked articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkedArticles"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Bookmarks]
+      summary: Add article to bookmark list
+      operationId: addBookmark
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddBookmarkRequest"
+      responses:
+        "204":
+          description: Bookmark added
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    delete:
+      tags: [Bookmarks]
+      summary: Remove article from bookmark list
+      operationId: removeBookmark
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RemoveBookmarkRequest"
+      responses:
+        "204":
+          description: Bookmark removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /subscriptions/{authorID}:
+    post:
+      tags: [Bookmarks]
+      summary: Follow author
+      operationId: followAuthor
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: authorID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Follow state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowState"
+    delete:
+      tags: [Bookmarks]
+      summary: Unfollow author
+      operationId: unfollowAuthor
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: authorID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Follow state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowState"
+
+  /reports:
+    get:
+      tags: [Reports]
+      summary: List pending reports for moderators
+      operationId: listReports
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Pending reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Reports]
+      summary: Create article or comment report
+      operationId: createReport
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportRequest"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /reports/{reportID}/decisions:
+    post:
+      tags: [Reports]
+      summary: Add moderation decision to report
+      operationId: decideReport
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: reportID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecideReportRequest"
+      responses:
+        "200":
+          description: Report state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /moderation/submissions:
+    get:
+      tags: [Moderation]
+      summary: List pending article moderation submissions
+      operationId: listModerationSubmissions
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Pending submissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationSubmissionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /moderation/submissions/{submissionID}/approve:
+    post:
+      tags: [Moderation]
+      summary: Approve article moderation submission
+      operationId: approveModerationSubmission
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: submissionID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Submission state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationSubmission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /moderation/submissions/{submissionID}/reject:
+    post:
+      tags: [Moderation]
+      summary: Reject article moderation submission
+      operationId: rejectModerationSubmission
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: submissionID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectModerationSubmissionRequest"
+      responses:
+        "200":
+          description: Submission state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationSubmission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /moderation/submissions/{submissionID}/threads:
+    post:
+      tags: [Moderation]
+      summary: Create moderation thread
+      operationId: createModerationThread
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: submissionID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateModerationThreadRequest"
+      responses:
+        "201":
+          description: Created moderation thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationThread"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /moderation/threads/{threadID}/resolve:
+    post:
+      tags: [Moderation]
+      summary: Resolve moderation thread
+      operationId: resolveModerationThread
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: threadID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Thread state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationThread"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List current user notifications
+      operationId: listNotifications
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread notification count
+      operationId: getUnreadNotificationCount
+      security:
+        - cookieSession: []
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadNotificationCount"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /notifications/stream:
+    get:
+      tags: [Notifications]
+      summary: Stream current user notification counters
+      operationId: streamNotifications
+      security:
+        - cookieSession: []
+      responses:
+        "200":
+          description: Server-sent events with unread notification counter updates
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /notifications/{notificationID}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: notificationID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Notification marked read
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /notifications/read-target:
+    post:
+      tags: [Notifications]
+      summary: Mark notifications for target as read
+      operationId: markTargetNotificationsRead
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkTargetReadRequest"
+      responses:
+        "204":
+          description: Target notifications marked read
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /chat/conversations:
+    get:
+      tags: [Chat]
+      summary: List current user chat conversations
+      operationId: listChatConversations
+      security:
+        - cookieSession: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Chat conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatConversationList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Chat]
+      summary: Start or return direct chat conversation
+      operationId: startChatConversation
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartChatConversationRequest"
+      responses:
+        "201":
+          description: Chat conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatConversation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /chat/conversations/{conversationID}/messages:
+    get:
+      tags: [Chat]
+      summary: List chat messages
+      operationId: listChatMessages
+      security:
+        - cookieSession: []
+      parameters:
+        - name: conversationID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Chat messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Chat]
+      summary: Send chat message
+      operationId: sendChatMessage
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: conversationID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendChatMessageRequest"
+      responses:
+        "201":
+          description: Chat message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /chat/conversations/{conversationID}/messages/stream:
+    get:
+      tags: [Chat]
+      summary: Stream chat messages
+      operationId: streamChatMessages
+      security:
+        - cookieSession: []
+      parameters:
+        - name: conversationID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: after_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Server-sent events with ready, ping and message events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /chat/conversations/{conversationID}/read:
+    post:
+      tags: [Chat]
+      summary: Mark chat conversation as read
+      operationId: markChatConversationRead
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: conversationID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Conversation marked read
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /media/files:
+    post:
+      tags: [Media]
+      summary: Upload media file
+      operationId: uploadMediaFile
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Uploaded media file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          description: File too large
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /media/files/{fileID}:
+    get:
+      tags: [Media]
+      summary: Get media file metadata
+      operationId: getMediaFile
+      parameters:
+        - name: fileID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Media file metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /media/files/{fileID}/content:
+    get:
+      tags: [Media]
+      summary: Download media file content
+      operationId: getMediaFileContent
+      parameters:
+        - name: fileID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Media file content
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: catch_session
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+
+  parameters:
+    OAuthProvider:
+      name: provider
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [google, vk, yandex]
+    ArticleId:
+      name: articleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Opaque cursor from previous list response.
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication required or invalid credentials
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Authenticated user has no permission for this action
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationFailed:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: Service is temporarily unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    RequestEmailCodeRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+
+    RequestEmailCodeResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        dev_code:
+          type: string
+          description: Present only outside production when AUTH_DEV_EMAIL_CODE_IN_RESPONSE=true.
+
+    VerifyEmailCodeRequest:
+      type: object
+      additionalProperties: false
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        code:
+          type: string
+          minLength: 6
+          maxLength: 12
+
+    DevLoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          default: dev@catch.local
+
+    CurrentUserResponse:
+      type: object
+      additionalProperties: false
+      required: [user, capabilities]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        capabilities:
+          $ref: "#/components/schemas/Capabilities"
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, email, rating, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 40
+        display_name:
+          type: string
+          maxLength: 120
+        avatar_url:
+          type: string
+          format: uri
+        rating:
+          type: integer
+          minimum: -1000000
+          maximum: 1000000
+        role:
+          type: string
+          enum: [user, admin]
+
+    Capabilities:
+      type: object
+      additionalProperties: false
+      required:
+        - can_create_article
+        - can_comment
+        - can_chat
+        - can_report
+        - can_publish_directly
+        - can_moderate
+        - can_chat_with_dev_lead
+      properties:
+        can_create_article:
+          type: boolean
+        can_comment:
+          type: boolean
+        can_chat:
+          type: boolean
+        can_report:
+          type: boolean
+        can_publish_directly:
+          type: boolean
+        can_moderate:
+          type: boolean
+        can_chat_with_dev_lead:
+          type: boolean
+
+    PrivateProfile:
+      type: object
+      additionalProperties: false
+      required: [user_id, email, rating, role]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 40
+        display_name:
+          type: string
+          maxLength: 120
+        avatar_url:
+          type: string
+          format: uri
+          maxLength: 2048
+        rating:
+          type: integer
+        role:
+          type: string
+          enum: [user, admin]
+        birth_date:
+          type: string
+          format: date
+        bio:
+          type: string
+          maxLength: 1000
+        boat:
+          type: string
+          maxLength: 120
+        country_code:
+          type: string
+          maxLength: 8
+        country_name:
+          type: string
+          maxLength: 120
+        city_name:
+          type: string
+          maxLength: 120
+
+    PublicProfile:
+      type: object
+      additionalProperties: false
+      required: [user_id, rating]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 3
+          maxLength: 40
+        display_name:
+          type: string
+          maxLength: 120
+        avatar_url:
+          type: string
+          format: uri
+          maxLength: 2048
+        rating:
+          type: integer
+        bio:
+          type: string
+          maxLength: 1000
+        boat:
+          type: string
+          maxLength: 120
+        country_name:
+          type: string
+          maxLength: 120
+        city_name:
+          type: string
+          maxLength: 120
+
+    ProfileSearch:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicProfile"
+
+    UpdateMyProfileRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          pattern: "^[a-z0-9_][a-z0-9_-]{2,39}$"
+        display_name:
+          type: string
+          maxLength: 120
+        avatar_url:
+          type: string
+          format: uri
+          maxLength: 2048
+        birth_date:
+          type: string
+          format: date
+          description: Empty string clears the value.
+        bio:
+          type: string
+          maxLength: 1000
+        boat:
+          type: string
+          maxLength: 120
+        country_code:
+          type: string
+          maxLength: 8
+        country_name:
+          type: string
+          maxLength: 120
+        city_name:
+          type: string
+          maxLength: 120
+
+    ArticleDocument:
+      type: object
+      additionalProperties: true
+      required: [type, version, blocks]
+      properties:
+        type:
+          type: string
+          const: catch.article
+        version:
+          type: integer
+          minimum: 1
+        blocks:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    CreateDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 160
+        content:
+          $ref: "#/components/schemas/ArticleDocument"
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+
+    UpdateDraftRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 160
+        content:
+          $ref: "#/components/schemas/ArticleDocument"
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+
+    SubmitDraftRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        publish_at:
+          type: string
+          format: date-time
+
+    ArticleDraft:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - current_revision_id
+        - moderation_required
+        - title
+        - content
+        - excerpt
+        - tags
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, in_moderation, ready_to_publish, published, archived, removed]
+        current_revision_id:
+          type: string
+          format: uuid
+        moderation_required:
+          type: boolean
+        title:
+          type: string
+        content:
+          $ref: "#/components/schemas/ArticleDocument"
+        excerpt:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        version:
+          type: integer
+          minimum: 1
+        scheduled_at:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+
+    ArticleDraftList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArticleDraft"
+
+    PublicArticle:
+      type: object
+      additionalProperties: false
+      required: [id, author_id, title, content, excerpt, tags, reactions_up, reactions_down, reaction_score, published_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          $ref: "#/components/schemas/ArticleDocument"
+        excerpt:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        reactions_up:
+          type: integer
+          minimum: 0
+        reactions_down:
+          type: integer
+          minimum: 0
+        reaction_score:
+          type: integer
+        published_at:
+          type: string
+          format: date-time
+
+    ArticleList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArticleListItem"
+        next_cursor:
+          type: string
+
+    ArticleListItem:
+      type: object
+      additionalProperties: false
+      required: [id, author_id, title, excerpt, tags, reactions_up, reactions_down, reaction_score, published_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        excerpt:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        reactions_up:
+          type: integer
+          minimum: 0
+        reactions_down:
+          type: integer
+          minimum: 0
+        reaction_score:
+          type: integer
+        published_at:
+          type: string
+          format: date-time
+
+    CreateCommentRequest:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        parent_id:
+          type: string
+          format: uuid
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+
+    UpdateCommentRequest:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+
+    Comment:
+      type: object
+      additionalProperties: false
+      required: [id, article_id, author_id, body, status, reactions_up, reactions_down, reaction_score, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        article_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        status:
+          type: string
+          enum: [active, deleted]
+        reactions_up:
+          type: integer
+          minimum: 0
+        reactions_down:
+          type: integer
+          minimum: 0
+        reaction_score:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+
+    CommentList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+
+    SetReactionRequest:
+      type: object
+      additionalProperties: false
+      required: [target_type, target_id, value]
+      properties:
+        target_type:
+          type: string
+          enum: [article, comment]
+        target_id:
+          type: string
+          format: uuid
+        value:
+          type: integer
+          enum: [-1, 0, 1]
+
+    Reaction:
+      type: object
+      additionalProperties: false
+      required: [target_type, target_id, value, reactions_up, reactions_down, reaction_score]
+      properties:
+        target_type:
+          type: string
+          enum: [article, comment]
+        target_id:
+          type: string
+          format: uuid
+        value:
+          type: integer
+          enum: [-1, 0, 1]
+        reactions_up:
+          type: integer
+          minimum: 0
+        reactions_down:
+          type: integer
+          minimum: 0
+        reaction_score:
+          type: integer
+
+    BookmarkList:
+      type: object
+      additionalProperties: false
+      required: [id, name, position]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+
+    BookmarkLists:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookmarkList"
+
+    CreateBookmarkListRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+
+    AddBookmarkRequest:
+      type: object
+      additionalProperties: false
+      required: [article_id]
+      properties:
+        list_id:
+          type: string
+          format: uuid
+        article_id:
+          type: string
+          format: uuid
+
+    RemoveBookmarkRequest:
+      type: object
+      additionalProperties: false
+      required: [list_id, article_id]
+      properties:
+        list_id:
+          type: string
+          format: uuid
+        article_id:
+          type: string
+          format: uuid
+
+    BookmarkedArticle:
+      type: object
+      additionalProperties: false
+      required: [list_id, article_id, author_id, title, excerpt, tags, published_at, bookmarked_at]
+      properties:
+        list_id:
+          type: string
+          format: uuid
+        article_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        excerpt:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        published_at:
+          type: string
+          format: date-time
+        bookmarked_at:
+          type: string
+          format: date-time
+
+    BookmarkedArticles:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookmarkedArticle"
+
+    FollowState:
+      type: object
+      additionalProperties: false
+      required: [author_id, following]
+      properties:
+        author_id:
+          type: string
+          format: uuid
+        following:
+          type: boolean
+
+    CreateReportRequest:
+      type: object
+      additionalProperties: false
+      required: [target_type, target_id, reason]
+      properties:
+        target_type:
+          type: string
+          enum: [article, comment]
+        target_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [advertising, profanity, insult, fraud, other]
+        details:
+          type: string
+          maxLength: 2000
+
+    DecideReportRequest:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [accept, reject]
+
+    Report:
+      type: object
+      additionalProperties: false
+      required: [id, target_type, target_id, reporter_id, reason, details, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        target_type:
+          type: string
+          enum: [article, comment]
+        target_id:
+          type: string
+          format: uuid
+        reporter_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [advertising, profanity, insult, fraud, other]
+        details:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        created_at:
+          type: string
+          format: date-time
+
+    ReportList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+
+    RejectModerationSubmissionRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    CreateModerationThreadRequest:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        block_id:
+          type: string
+          maxLength: 128
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+
+    ModerationSubmission:
+      type: object
+      additionalProperties: false
+      required: [id, article_id, revision_id, author_id, status, rejection_reason, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        article_id:
+          type: string
+          format: uuid
+        revision_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, approved, rejected, cancelled]
+        rejection_reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ModerationSubmissionList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModerationSubmission"
+
+    ModerationThread:
+      type: object
+      additionalProperties: false
+      required: [id, submission_id, author_id, body, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        submission_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+        body:
+          type: string
+        status:
+          type: string
+          enum: [open, resolved]
+        created_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      additionalProperties: false
+      required: [id, event_type, title, body, unread_count, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        target_type:
+          type: string
+        target_id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        unread_count:
+          type: integer
+          minimum: 1
+        read_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NotificationList:
+      type: object
+      additionalProperties: false
+      required: [items, unread_total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unread_total:
+          type: integer
+          minimum: 0
+
+    UnreadNotificationCount:
+      type: object
+      additionalProperties: false
+      required: [unread_total]
+      properties:
+        unread_total:
+          type: integer
+          minimum: 0
+
+    MarkTargetReadRequest:
+      type: object
+      additionalProperties: false
+      required: [target_type, target_id]
+      properties:
+        target_type:
+          type: string
+        target_id:
+          type: string
+
+    StartChatConversationRequest:
+      type: object
+      additionalProperties: false
+      required: [recipient_id]
+      properties:
+        recipient_id:
+          type: string
+          format: uuid
+
+    SendChatMessageRequest:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+
+    ChatConversation:
+      type: object
+      additionalProperties: false
+      required: [id, member_ids, unread_count, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        member_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        unread_count:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ChatConversationList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatConversation"
+
+    ChatMessage:
+      type: object
+      additionalProperties: false
+      required: [id, conversation_id, sender_id, body, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversation_id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        status:
+          type: string
+          enum: [sent, read]
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+
+    ChatMessageList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+
+    MediaFile:
+      type: object
+      additionalProperties: false
+      required: [id, original_name, mime_type, size_bytes, url, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        original_name:
+          type: string
+        mime_type:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, image/gif, application/pdf]
+        size_bytes:
+          type: integer
+          minimum: 1
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, message]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+          enum:
+            - invalid_request
+            - validation_failed
+            - unauthorized
+            - forbidden
+            - not_found
+            - conflict
+            - rate_limited
+            - not_implemented
+            - service_unavailable
+            - internal_error
+        message:
+          type: string
+        trace_id:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

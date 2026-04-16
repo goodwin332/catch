@@ -1,0 +1,10 @@
+alter table if exists chat_conversation_members drop constraint if exists chat_conversation_members_last_read_fk;
+drop table if exists chat_messages;
+drop table if exists chat_conversation_members;
+drop table if exists chat_conversations;
+drop table if exists report_decisions;
+drop table if exists reports;
+drop table if exists moderation_threads;
+drop table if exists moderation_approvals;
+drop table if exists moderation_submissions;
+drop table if exists notifications;

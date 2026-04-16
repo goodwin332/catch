@@ -1,0 +1,41 @@
+name: catch
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: catch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: catch
+      POSTGRES_USER: catch
+      POSTGRES_PASSWORD: catch
+    ports:
+      - "5432:5432"
+    volumes:
+      - catch-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catch -d catch"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: catch-meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: local-meili-master-key
+    ports:
+      - "7700:7700"
+    volumes:
+      - catch-meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  catch-postgres-data:
+  catch-meilisearch-data:
