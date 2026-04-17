@@ -41,16 +41,33 @@ func (s *Service) GetMyProfile(ctx context.Context, userID string) (dto.PrivateP
 
 func (s *Service) GetPublicProfile(ctx context.Context, username string) (dto.PublicProfileResponse, error) {
 	normalized, ok := domain.NormalizeUsername(username)
-	if !ok || normalized == "" {
+	if normalized == "" {
 		return dto.PublicProfileResponse{}, httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Профиль не найден")
+	}
+	if !ok {
+		profile, err := s.repo.FindPublicByUserID(ctx, strings.TrimSpace(username))
+		if err != nil {
+			if errors.Is(err, identitydomain.ErrNotFound) {
+				return dto.PublicProfileResponse{}, httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Профиль не найден")
+			}
+			return dto.PublicProfileResponse{}, err
+		}
+		return mapPublicProfile(profile), nil
 	}
 
 	profile, err := s.repo.FindPublicByUsername(ctx, normalized)
 	if err != nil {
 		if errors.Is(err, identitydomain.ErrNotFound) {
-			return dto.PublicProfileResponse{}, httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Профиль не найден")
+			profile, err = s.repo.FindPublicByUserID(ctx, strings.TrimSpace(username))
+			if err != nil {
+				if errors.Is(err, identitydomain.ErrNotFound) {
+					return dto.PublicProfileResponse{}, httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Профиль не найден")
+				}
+				return dto.PublicProfileResponse{}, err
+			}
+		} else {
+			return dto.PublicProfileResponse{}, err
 		}
-		return dto.PublicProfileResponse{}, err
 	}
 
 	return mapPublicProfile(profile), nil

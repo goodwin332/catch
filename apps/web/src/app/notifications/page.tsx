@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PageShell } from "@/components/page-shell";
 import { authFetch } from "@/lib/auth";
 import type { components } from "@/lib/api-types";
-import { markNotificationRead } from "./actions";
+import { markNotificationRead, openNotificationTarget } from "./actions";
 
 type NotificationList = components["schemas"]["NotificationList"];
 
@@ -44,12 +44,21 @@ export default async function NotificationsPage() {
                   </small>
                 </div>
                 {item.read_at ? null : (
-                  <form action={markNotificationRead}>
-                    <input type="hidden" name="notification_id" value={item.id} />
-                    <button className="secondary-button" type="submit">
-                      Прочитано
-                    </button>
-                  </form>
+                  <div className="editor-actions">
+                    {item.target_type && item.target_id ? (
+                      <form action={openNotificationTarget.bind(null, item.target_type, item.target_id)}>
+                        <button className="primary-button" type="submit">
+                          Открыть
+                        </button>
+                      </form>
+                    ) : null}
+                    <form action={markNotificationRead}>
+                      <input type="hidden" name="notification_id" value={item.id} />
+                      <button className="secondary-button" type="submit">
+                        Прочитано
+                      </button>
+                    </form>
+                  </div>
                 )}
               </article>
             ))}
@@ -59,4 +68,3 @@ export default async function NotificationsPage() {
     </PageShell>
   );
 }
-

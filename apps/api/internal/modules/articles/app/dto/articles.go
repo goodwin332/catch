@@ -26,6 +26,7 @@ type ArticleDraftResponse struct {
 	Title              string          `json:"title"`
 	Content            json.RawMessage `json:"content"`
 	Excerpt            string          `json:"excerpt"`
+	CoverURL           string          `json:"cover_url,omitempty"`
 	Tags               []string        `json:"tags"`
 	Version            int             `json:"version"`
 	ScheduledAt        *string         `json:"scheduled_at,omitempty"`
@@ -42,6 +43,7 @@ type PublicArticleResponse struct {
 	Title         string          `json:"title"`
 	Content       json.RawMessage `json:"content"`
 	Excerpt       string          `json:"excerpt"`
+	CoverURL      string          `json:"cover_url,omitempty"`
 	Tags          []string        `json:"tags"`
 	ReactionsUp   int             `json:"reactions_up"`
 	ReactionsDown int             `json:"reactions_down"`
@@ -54,6 +56,7 @@ type ArticleListItem struct {
 	AuthorID      string   `json:"author_id"`
 	Title         string   `json:"title"`
 	Excerpt       string   `json:"excerpt"`
+	CoverURL      string   `json:"cover_url,omitempty"`
 	Tags          []string `json:"tags"`
 	ReactionsUp   int      `json:"reactions_up"`
 	ReactionsDown int      `json:"reactions_down"`

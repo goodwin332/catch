@@ -463,6 +463,32 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /articles/drafts/{articleId}/archive:
+    post:
+      tags: [Articles]
+      summary: Archive own draft or moderation submission
+      operationId: archiveArticleDraft
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - $ref: "#/components/parameters/ArticleId"
+      responses:
+        "200":
+          description: Archived draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArticleDraft"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /articles/{articleId}:
     get:
       tags: [Articles]
@@ -1062,6 +1088,32 @@ paths:
           $ref: "#/components/responses/Conflict"
 
   /moderation/submissions/{submissionID}/threads:
+    get:
+      tags: [Moderation]
+      summary: List moderation threads for submission
+      operationId: listModerationThreads
+      security:
+        - cookieSession: []
+      parameters:
+        - name: submissionID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Moderation threads
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationThreadList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Moderation]
       summary: Create moderation thread
@@ -1124,6 +1176,43 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /moderation/threads/{threadID}/reopen:
+    post:
+      tags: [Moderation]
+      summary: Reopen moderation thread
+      operationId: reopenModerationThread
+      security:
+        - cookieSession: []
+        - csrfHeader: []
+      parameters:
+        - name: threadID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReopenModerationThreadRequest"
+      responses:
+        "200":
+          description: Thread state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationThread"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /notifications:
     get:
@@ -1485,6 +1574,33 @@ paths:
                 type: string
                 format: binary
             application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /media/files/{fileID}/preview:
+    get:
+      tags: [Media]
+      summary: Download media preview
+      operationId: getMediaFilePreview
+      parameters:
+        - name: fileID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Media preview image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
               schema:
                 type: string
                 format: binary
@@ -1920,6 +2036,9 @@ components:
           $ref: "#/components/schemas/ArticleDocument"
         excerpt:
           type: string
+        cover_url:
+          type: string
+          format: uri-reference
         tags:
           type: array
           items:
@@ -1961,6 +2080,9 @@ components:
           $ref: "#/components/schemas/ArticleDocument"
         excerpt:
           type: string
+        cover_url:
+          type: string
+          format: uri-reference
         tags:
           type: array
           items:
@@ -2004,6 +2126,9 @@ components:
           type: string
         excerpt:
           type: string
+        cover_url:
+          type: string
+          format: uri-reference
         tags:
           type: array
           items:
@@ -2191,11 +2316,13 @@ components:
     BookmarkedArticle:
       type: object
       additionalProperties: false
-      required: [list_id, article_id, author_id, title, excerpt, tags, published_at, bookmarked_at]
+      required: [list_id, list_name, article_id, author_id, title, excerpt, tags, published_at, bookmarked_at]
       properties:
         list_id:
           type: string
           format: uuid
+        list_name:
+          type: string
         article_id:
           type: string
           format: uuid
@@ -2327,10 +2454,18 @@ components:
           minLength: 1
           maxLength: 4000
 
+    ReopenModerationThreadRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 2000
+
     ModerationSubmission:
       type: object
       additionalProperties: false
-      required: [id, article_id, revision_id, author_id, status, rejection_reason, created_at, updated_at]
+      required: [id, article_id, revision_id, author_id, status, rejection_reason, approval_count, open_thread_count, created_at, updated_at]
       properties:
         id:
           type: string
@@ -2349,6 +2484,12 @@ components:
           enum: [pending, approved, rejected, cancelled]
         rejection_reason:
           type: string
+        approval_count:
+          type: integer
+          minimum: 0
+        open_thread_count:
+          type: integer
+          minimum: 0
         created_at:
           type: string
           format: date-time
@@ -2390,6 +2531,16 @@ components:
         created_at:
           type: string
           format: date-time
+
+    ModerationThreadList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModerationThread"
 
     Notification:
       type: object
@@ -2565,6 +2716,8 @@ components:
           type: integer
           minimum: 1
         url:
+          type: string
+        preview_url:
           type: string
         created_at:
           type: string

@@ -158,6 +158,15 @@ func TestReportsChatAndMediaWorkflows(t *testing.T) {
 	if len(data) == 0 {
 		t.Fatal("media content is empty")
 	}
+	previewResponse := doJSONWithHeaders(t, server.Client(), server.URL+"/api/v1/media/files/"+fileID+"/preview", http.MethodGet, "", http.StatusOK, testSession{}, nil)
+	previewData, err := io.ReadAll(previewResponse.Body)
+	previewResponse.Body.Close()
+	if err != nil {
+		t.Fatalf("read media preview: %v", err)
+	}
+	if len(previewData) == 0 || previewResponse.Header.Get("Content-Type") != "image/png" {
+		t.Fatalf("media preview content-type=%q size=%d, want image/png with body", previewResponse.Header.Get("Content-Type"), len(previewData))
+	}
 	deleted, err := container.Media.CleanupUnreferenced(context.Background(), 0, 10)
 	if err != nil {
 		t.Fatalf("cleanup unreferenced media: %v", err)
@@ -757,13 +766,17 @@ func uploadPNG(t *testing.T, server *httptest.Server, session testSession) strin
 	response := doJSONWithHeaders(t, server.Client(), server.URL+"/api/v1/media/files", http.MethodPost, body.String(), http.StatusCreated, session, headers)
 	defer response.Body.Close()
 	var file struct {
-		ID string `json:"id"`
+		ID         string `json:"id"`
+		PreviewURL string `json:"preview_url"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&file); err != nil {
 		t.Fatalf("decode uploaded file: %v", err)
 	}
 	if file.ID == "" {
 		t.Fatal("uploaded file id is empty")
+	}
+	if file.PreviewURL == "" {
+		t.Fatal("uploaded image preview_url is empty")
 	}
 	return file.ID
 }

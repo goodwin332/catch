@@ -250,6 +250,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/articles/drafts/{articleId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive own draft or moderation submission */
+        post: operations["archiveArticleDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/articles/{articleId}": {
         parameters: {
             query?: never;
@@ -536,7 +553,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List moderation threads for submission */
+        get: operations["listModerationThreads"];
         put?: never;
         /** Create moderation thread */
         post: operations["createModerationThread"];
@@ -557,6 +575,23 @@ export interface paths {
         put?: never;
         /** Resolve moderation thread */
         post: operations["resolveModerationThread"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/moderation/threads/{threadID}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen moderation thread */
+        post: operations["reopenModerationThread"];
         delete?: never;
         options?: never;
         head?: never;
@@ -769,6 +804,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/files/{fileID}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download media preview */
+        get: operations["getMediaFilePreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -908,6 +960,8 @@ export interface components {
             title: string;
             content: components["schemas"]["ArticleDocument"];
             excerpt: string;
+            /** Format: uri-reference */
+            cover_url?: string;
             tags: string[];
             version: number;
             /** Format: date-time */
@@ -926,6 +980,8 @@ export interface components {
             title: string;
             content: components["schemas"]["ArticleDocument"];
             excerpt: string;
+            /** Format: uri-reference */
+            cover_url?: string;
             tags: string[];
             reactions_up: number;
             reactions_down: number;
@@ -944,6 +1000,8 @@ export interface components {
             author_id: string;
             title: string;
             excerpt: string;
+            /** Format: uri-reference */
+            cover_url?: string;
             tags: string[];
             reactions_up: number;
             reactions_down: number;
@@ -1030,6 +1088,7 @@ export interface components {
         BookmarkedArticle: {
             /** Format: uuid */
             list_id: string;
+            list_name: string;
             /** Format: uuid */
             article_id: string;
             /** Format: uuid */
@@ -1090,6 +1149,9 @@ export interface components {
             block_id?: string;
             body: string;
         };
+        ReopenModerationThreadRequest: {
+            reason?: string;
+        };
         ModerationSubmission: {
             /** Format: uuid */
             id: string;
@@ -1102,6 +1164,8 @@ export interface components {
             /** @enum {string} */
             status: "pending" | "approved" | "rejected" | "cancelled";
             rejection_reason: string;
+            approval_count: number;
+            open_thread_count: number;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -1123,6 +1187,9 @@ export interface components {
             status: "open" | "resolved";
             /** Format: date-time */
             created_at: string;
+        };
+        ModerationThreadList: {
+            items: components["schemas"]["ModerationThread"][];
         };
         Notification: {
             /** Format: uuid */
@@ -1199,6 +1266,7 @@ export interface components {
             width?: number;
             height?: number;
             url: string;
+            preview_url?: string;
             /** Format: date-time */
             created_at: string;
         };
@@ -1735,6 +1803,32 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationFailed"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    archiveArticleDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                articleId: components["parameters"]["ArticleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Archived draft */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleDraft"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             500: components["responses"]["InternalError"];
         };
     };
@@ -2325,6 +2419,31 @@ export interface operations {
             409: components["responses"]["Conflict"];
         };
     };
+    listModerationThreads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                submissionID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Moderation threads */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModerationThreadList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     createModerationThread: {
         parameters: {
             query?: never;
@@ -2377,6 +2496,36 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    reopenModerationThread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                threadID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReopenModerationThreadRequest"];
+            };
+        };
+        responses: {
+            /** @description Thread state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModerationThread"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     listNotifications: {
@@ -2731,6 +2880,30 @@ export interface operations {
                     "image/webp": string;
                     "image/gif": string;
                     "application/pdf": string;
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getMediaFilePreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fileID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media preview image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/webp": string;
                 };
             };
             404: components["responses"]["NotFound"];

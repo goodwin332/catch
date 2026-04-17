@@ -19,6 +19,7 @@ type List struct {
 
 type Article struct {
 	ListID       string
+	ListName     string
 	ArticleID    string
 	AuthorID     string
 	Title        string

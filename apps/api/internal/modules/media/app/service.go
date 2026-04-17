@@ -9,7 +9,7 @@ import (
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -94,6 +94,28 @@ func (s *Service) Content(ctx context.Context, fileID string) (domain.File, []by
 	return file, data, nil
 }
 
+func (s *Service) Preview(ctx context.Context, fileID string) (domain.File, []byte, string, error) {
+	file, err := s.repo.FindReady(ctx, fileID)
+	if err != nil {
+		return domain.File{}, nil, "", mapMediaError(err)
+	}
+	if !previewable(file.MimeType) {
+		return domain.File{}, nil, "", mapMediaError(domain.ErrNoPreview)
+	}
+	data, err := s.storage.Open(ctx, file.StorageKey)
+	if err != nil {
+		return domain.File{}, nil, "", err
+	}
+	if file.MimeType == "image/webp" {
+		return file, data, file.MimeType, nil
+	}
+	preview, err := renderPreviewPNG(data, 720)
+	if err != nil {
+		return domain.File{}, nil, "", mapMediaError(err)
+	}
+	return file, preview, "image/png", nil
+}
+
 func (s *Service) CleanupUnreferenced(ctx context.Context, olderThan time.Duration, limit int) (int, error) {
 	if olderThan < 0 {
 		olderThan = 0
@@ -120,6 +142,10 @@ func (s *Service) CleanupUnreferenced(ctx context.Context, olderThan time.Durati
 }
 
 func (s *Service) mapFile(file domain.File) dto.FileResponse {
+	previewURL := ""
+	if previewable(file.MimeType) {
+		previewURL = s.publicBaseURL + "/" + file.ID + "/preview"
+	}
 	return dto.FileResponse{
 		ID:           file.ID,
 		OriginalName: file.OriginalName,
@@ -128,6 +154,7 @@ func (s *Service) mapFile(file domain.File) dto.FileResponse {
 		Width:        file.Width,
 		Height:       file.Height,
 		URL:          s.publicBaseURL + "/" + file.ID + "/content",
+		PreviewURL:   previewURL,
 		CreatedAt:    file.CreatedAt.Format(time.RFC3339),
 	}
 }
@@ -150,6 +177,8 @@ func mapMediaError(err error) error {
 		return httpx.NewError(http.StatusRequestEntityTooLarge, httpx.CodeInvalidRequest, "Файл слишком большой")
 	case errors.Is(err, domain.ErrFileNotFound):
 		return httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Файл не найден")
+	case errors.Is(err, domain.ErrNoPreview):
+		return httpx.NewError(http.StatusNotFound, httpx.CodeNotFound, "Превью недоступно")
 	default:
 		return err
 	}
@@ -178,6 +207,54 @@ func imageDimensions(mimeType string, data []byte) (*int, *int, error) {
 		return nil, nil, domain.ErrInvalidFile
 	}
 	return &cfg.Width, &cfg.Height, nil
+}
+
+func previewable(mimeType string) bool {
+	switch mimeType {
+	case "image/jpeg", "image/png", "image/gif", "image/webp":
+		return true
+	default:
+		return false
+	}
+}
+
+func renderPreviewPNG(data []byte, maxSide int) ([]byte, error) {
+	source, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, domain.ErrInvalidFile
+	}
+	bounds := source.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+	if width <= 0 || height <= 0 {
+		return nil, domain.ErrInvalidFile
+	}
+
+	targetWidth, targetHeight := fitSize(width, height, maxSide)
+	target := image.NewRGBA(image.Rect(0, 0, targetWidth, targetHeight))
+	for y := 0; y < targetHeight; y++ {
+		sourceY := bounds.Min.Y + y*height/targetHeight
+		for x := 0; x < targetWidth; x++ {
+			sourceX := bounds.Min.X + x*width/targetWidth
+			target.Set(x, y, source.At(sourceX, sourceY))
+		}
+	}
+
+	var output bytes.Buffer
+	if err := png.Encode(&output, target); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
+}
+
+func fitSize(width, height, maxSide int) (int, int) {
+	if width <= maxSide && height <= maxSide {
+		return width, height
+	}
+	if width >= height {
+		return maxSide, max(1, height*maxSide/width)
+	}
+	return max(1, width*maxSide/height), maxSide
 }
 
 func cleanFileName(name string) string {

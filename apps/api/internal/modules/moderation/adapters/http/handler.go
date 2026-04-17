@@ -26,14 +26,28 @@ func (h *Handler) RegisterRoutes(r chi.Router, log *slog.Logger, requireAuth fun
 	r.Group(func(r chi.Router) {
 		r.Use(requireAuth)
 		r.Get("/moderation/submissions", httpx.Wrap(log, h.list))
+		r.Get("/moderation/submissions/{submissionID}/threads", httpx.Wrap(log, h.listThreads))
 		r.Group(func(r chi.Router) {
 			r.Use(requireCSRF)
 			r.Post("/moderation/submissions/{submissionID}/approve", httpx.Wrap(log, h.approve))
 			r.Post("/moderation/submissions/{submissionID}/reject", httpx.Wrap(log, h.reject))
 			r.Post("/moderation/submissions/{submissionID}/threads", httpx.Wrap(log, h.createThread))
 			r.Post("/moderation/threads/{threadID}/resolve", httpx.Wrap(log, h.resolveThread))
+			r.Post("/moderation/threads/{threadID}/reopen", httpx.Wrap(log, h.reopenThread))
 		})
 	})
+}
+
+func (h *Handler) listThreads(w http.ResponseWriter, r *http.Request) error {
+	actor, err := actorFromRequest(r)
+	if err != nil {
+		return err
+	}
+	response, err := h.service.ListThreads(r.Context(), actor, chi.URLParam(r, "submissionID"))
+	if err != nil {
+		return err
+	}
+	return httpx.JSON(w, http.StatusOK, response)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) error {
@@ -99,6 +113,22 @@ func (h *Handler) resolveThread(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	response, err := h.service.ResolveThread(r.Context(), actor, chi.URLParam(r, "threadID"))
+	if err != nil {
+		return err
+	}
+	return httpx.JSON(w, http.StatusOK, response)
+}
+
+func (h *Handler) reopenThread(w http.ResponseWriter, r *http.Request) error {
+	actor, err := actorFromRequest(r)
+	if err != nil {
+		return err
+	}
+	var request dto.ReopenThreadRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return httpx.NewError(http.StatusBadRequest, httpx.CodeInvalidRequest, "Некорректный JSON")
+	}
+	response, err := h.service.ReopenThread(r.Context(), actor, chi.URLParam(r, "threadID"), request)
 	if err != nil {
 		return err
 	}

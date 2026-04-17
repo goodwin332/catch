@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"catch/apps/api/internal/platform/db"
 )
@@ -78,4 +79,16 @@ func Notify(ctx context.Context, q db.Querier, input NotificationInput) error {
 		"target_type":     input.TargetType,
 		"target_id":       input.TargetID,
 	})
+}
+
+func TextPreview(value string, limit int) string {
+	clean := strings.TrimSpace(value)
+	if clean == "" || limit <= 0 {
+		return ""
+	}
+	runes := []rune(clean)
+	if len(runes) <= limit {
+		return clean
+	}
+	return string(runes[:limit]) + "..."
 }

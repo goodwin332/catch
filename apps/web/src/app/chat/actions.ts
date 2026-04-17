@@ -36,3 +36,17 @@ export async function sendMessage(conversationID: string, formData: FormData) {
   });
   redirect(`/chat/${conversationID}`);
 }
+
+export async function markConversationRead(conversationID: string) {
+  const headers = await sessionHeaders();
+  if (!headers) {
+    redirect("/login");
+  }
+  await fetch(`${apiBaseURL()}/chat/conversations/${conversationID}/read`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({}),
+    cache: "no-store",
+  });
+  redirect(`/chat/${conversationID}`);
+}

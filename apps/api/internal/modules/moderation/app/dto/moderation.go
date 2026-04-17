@@ -7,6 +7,8 @@ type SubmissionResponse struct {
 	AuthorID        string `json:"author_id"`
 	Status          string `json:"status"`
 	RejectionReason string `json:"rejection_reason,omitempty"`
+	ApprovalCount   int    `json:"approval_count"`
+	OpenThreadCount int    `json:"open_thread_count"`
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
 }
@@ -30,6 +32,14 @@ type ThreadResponse struct {
 	CreatedAt    string `json:"created_at"`
 }
 
+type ThreadListResponse struct {
+	Items []ThreadResponse `json:"items"`
+}
+
 type RejectSubmissionRequest struct {
 	Reason string `json:"reason"`
+}
+
+type ReopenThreadRequest struct {
+	Reason string `json:"reason,omitempty"`
 }

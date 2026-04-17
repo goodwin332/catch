@@ -35,16 +35,19 @@ export async function saveDraft(articleID: string, formData: FormData) {
   redirect(`/articles/${articleID}/edit?saved=1`);
 }
 
-export async function submitDraft(articleID: string) {
+export async function submitDraft(articleID: string, formData: FormData) {
   const headers = await sessionHeaders();
   if (!headers) {
     redirect("/login");
   }
 
+  const publishAt = parsePublishAt(formData);
+  const body = publishAt ? JSON.stringify({ publish_at: publishAt }) : JSON.stringify({});
+
   const response = await fetch(`${apiBaseURL()}/articles/drafts/${articleID}/submit`, {
     method: "POST",
     headers,
-    body: JSON.stringify({}),
+    body,
     cache: "no-store",
   });
 
@@ -53,6 +56,26 @@ export async function submitDraft(articleID: string) {
   }
 
   redirect(`/articles/${articleID}/edit?submitted=1`);
+}
+
+export async function archiveDraft(articleID: string) {
+  const headers = await sessionHeaders();
+  if (!headers) {
+    redirect("/login");
+  }
+
+  const response = await fetch(`${apiBaseURL()}/articles/drafts/${articleID}/archive`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({}),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    redirect(`/articles/${articleID}/edit?error=archive-failed`);
+  }
+
+  redirect(`/articles/my?archived=1`);
 }
 
 async function uploadMediaIfPresent(formData: FormData): Promise<MediaFile | null> {
@@ -90,6 +113,8 @@ function buildDocument(body: string, media: MediaFile | null, formData: FormData
     },
   ];
 
+  blocks.push(...parseExistingMediaBlocks(formData));
+
   if (media) {
     blocks.push({
       id: `media-${media.id}`,
@@ -97,7 +122,10 @@ function buildDocument(body: string, media: MediaFile | null, formData: FormData
       media_file_id: media.id,
       file_id: media.id,
       url: media.url,
+      preview_url: media.preview_url,
       title: media.original_name,
+      width: media.width,
+      height: media.height,
     });
   }
 
@@ -118,6 +146,28 @@ function buildDocument(body: string, media: MediaFile | null, formData: FormData
   };
 }
 
+function parseExistingMediaBlocks(formData: FormData): ArticleDocument["blocks"] {
+  const raw = String(formData.get("existing_media_blocks") || "");
+  if (!raw) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((block): block is ArticleDocument["blocks"][number] => {
+      if (!block || typeof block !== "object") {
+        return false;
+      }
+      const type = (block as { type?: unknown }).type;
+      return type === "image" || type === "attachment";
+    });
+  } catch {
+    return [];
+  }
+}
+
 function parseTags(value: string) {
   return value
     .split(",")
@@ -129,6 +179,7 @@ function parseGeoPoint(formData: FormData) {
   const label = String(formData.get("point_label") || "").trim();
   const latitude = parseCoordinate(formData.get("point_lat"), -90, 90);
   const longitude = parseCoordinate(formData.get("point_lng"), -180, 180);
+  const radiusMeters = parsePositiveNumber(formData.get("point_radius_meters"));
   if (latitude === null || longitude === null) {
     return null;
   }
@@ -138,6 +189,7 @@ function parseGeoPoint(formData: FormData) {
     label: label || "Точка маршрута",
     latitude,
     longitude,
+    ...(radiusMeters ? { radius_meters: radiusMeters } : {}),
   };
 }
 
@@ -183,4 +235,24 @@ function parseCoordinate(value: FormDataEntryValue | null, min: number, max: num
     return null;
   }
   return parsed;
+}
+
+function parsePositiveNumber(value: FormDataEntryValue | null) {
+  const parsed = Number(String(value || "").replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 10000) {
+    return null;
+  }
+  return Math.round(parsed);
+}
+
+function parsePublishAt(formData: FormData) {
+  const raw = String(formData.get("publish_at") || "").trim();
+  if (!raw) {
+    return "";
+  }
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toISOString();
 }

@@ -37,6 +37,13 @@ func (r *Repository) FindPublicByUsername(ctx context.Context, username string) 
 	return scanProfile(row)
 }
 
+func (r *Repository) FindPublicByUserID(ctx context.Context, userID string) (domain.Profile, error) {
+	row := r.tx.Querier(ctx).QueryRow(ctx, profileSelectSQL()+`
+		where u.id::text = $1 and u.status = 'active'
+	`, userID)
+	return scanProfile(row)
+}
+
 func (r *Repository) SearchPublic(ctx context.Context, query string, limit int) ([]domain.Profile, error) {
 	pattern := "%" + strings.ToLower(query) + "%"
 	rows, err := r.tx.Querier(ctx).Query(ctx, profileSelectSQL()+`

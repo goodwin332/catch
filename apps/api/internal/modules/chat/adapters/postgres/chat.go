@@ -315,7 +315,7 @@ func (r *Repository) notifyMessageCreated(ctx context.Context, message domain.Me
 			TargetType: "conversation",
 			TargetID:   message.ConversationID,
 			Title:      "Новое сообщение",
-			Body:       "В диалоге появилось новое сообщение.",
+			Body:       "Сообщение: " + events.TextPreview(message.Body, 10),
 		}); err != nil {
 			return err
 		}

@@ -1,6 +1,8 @@
 import { AppHeader } from "@/components/app-header";
 import { ArticleCard } from "@/components/article-card";
 import { getPopularFeed, getPublicFeed } from "@/lib/api";
+import type { ArticleListResponse } from "@/lib/api";
+import { authFetch, getCurrentUser } from "@/lib/auth";
 import { fallbackArticles } from "@/lib/sample-data";
 
 type HomePageProps = {
@@ -10,8 +12,10 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const isPopular = params?.feed === "popular";
-  const feed = isPopular ? await getPopularFeed() : await getPublicFeed(params?.cursor);
-  const articles = feed.items.length > 0 ? feed.items : fallbackArticles;
+  const isSubscriptions = params?.feed === "subscriptions";
+  const currentUser = await getCurrentUser();
+  const feed = await loadFeed(isPopular, isSubscriptions, params?.cursor);
+  const articles = feed.items.length > 0 ? feed.items : isSubscriptions ? [] : fallbackArticles;
 
   return (
     <div className="shell">
@@ -19,26 +23,44 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <main className="page">
         <section aria-labelledby="feed-title">
           <div className="tabs">
-            <a className={`tab ${isPopular ? "" : "tab-active"}`} href="/">
+            <a className={`tab ${!isPopular && !isSubscriptions ? "tab-active" : ""}`} href="/">
               Свежее
             </a>
             <a className={`tab ${isPopular ? "tab-active" : ""}`} href="/?feed=popular">
               Популярное
             </a>
-            <a className="tab" href="/login">
+            <a className={`tab ${isSubscriptions ? "tab-active" : ""}`} href={currentUser ? "/?feed=subscriptions" : "/login"}>
               Подписки
             </a>
           </div>
           <h1 id="feed-title" style={{ position: "absolute", left: "-10000px" }}>
             Лента статей
           </h1>
-          <div className="feed">
-            {articles.map((article, index) => (
-              <ArticleCard article={article} index={index} key={article.id} />
-            ))}
-          </div>
+          {isSubscriptions && !currentUser ? (
+            <div className="empty-state feed-empty">
+              <h2>Войдите, чтобы собрать свою ленту</h2>
+              <p>Подписки работают от вашего профиля и показывают авторов, за которыми вы следите.</p>
+              <a className="primary-button" href="/login">
+                Войти
+              </a>
+            </div>
+          ) : articles.length > 0 ? (
+            <div className="feed">
+              {articles.map((article, index) => (
+                <ArticleCard article={article} index={index} key={article.id} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state feed-empty">
+              <h2>В подписках пока пусто</h2>
+              <p>Найдите авторов через поиск и подпишитесь на тех, чей опыт вам полезен.</p>
+              <a className="secondary-button" href="/search?q=%40">
+                Найти авторов
+              </a>
+            </div>
+          )}
           {!isPopular && feed.next_cursor ? (
-            <a className="pagination-link" href={`/?cursor=${encodeURIComponent(feed.next_cursor)}`}>
+            <a className="pagination-link" href={`/?${isSubscriptions ? "feed=subscriptions&" : ""}cursor=${encodeURIComponent(feed.next_cursor)}`}>
               Следующая страница
             </a>
           ) : null}
@@ -66,4 +88,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </main>
     </div>
   );
+}
+
+async function loadFeed(isPopular: boolean, isSubscriptions: boolean, cursor?: string): Promise<ArticleListResponse> {
+  if (isPopular) {
+    return getPopularFeed();
+  }
+  if (!isSubscriptions) {
+    return getPublicFeed(cursor);
+  }
+  const params = new URLSearchParams({ limit: "10" });
+  if (cursor) {
+    params.set("cursor", cursor);
+  }
+  const response = await authFetch(`/articles/feed?${params.toString()}`);
+  if (!response?.ok) {
+    return { items: [] };
+  }
+  return response.json() as Promise<ArticleListResponse>;
 }

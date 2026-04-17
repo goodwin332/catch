@@ -83,6 +83,7 @@ func (s *Service) Articles(ctx context.Context, actor accessdomain.Principal, li
 	for _, article := range articles {
 		items = append(items, dto.BookmarkedArticleResponse{
 			ListID:       article.ListID,
+			ListName:     article.ListName,
 			ArticleID:    article.ArticleID,
 			AuthorID:     article.AuthorID,
 			Title:        article.Title,

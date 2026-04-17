@@ -91,17 +91,30 @@ func (r *Repository) FindPublished(ctx context.Context, articleID string, now ti
 }
 
 func (r *Repository) ListPublished(ctx context.Context, input ports.ListPublishedInput) ([]domain.Draft, error) {
-	rows, err := r.tx.Querier(ctx).Query(ctx, draftSelectSQL()+`
+	reactionRankSQL := reactionScoreSQL()
+	rows, err := r.tx.Querier(ctx).Query(ctx, draftSelectSQLWithRank(reactionRankSQL)+`
 		where a.status = 'published'
 			and a.published_at <= $1
 			and (
 				$3::timestamptz is null
-				or (a.published_at, a.id) < ($3::timestamptz, $4::uuid)
+				or date_trunc('day', a.published_at) < date_trunc('day', $3::timestamptz)
+				or (
+					date_trunc('day', a.published_at) = date_trunc('day', $3::timestamptz)
+					and (
+						`+reactionRankSQL+` < $5::integer
+						or (`+reactionRankSQL+` = $5::integer and a.published_at < $3::timestamptz)
+						or (`+reactionRankSQL+` = $5::integer and a.published_at = $3::timestamptz and a.id < $4::uuid)
+					)
+				)
 			)
 		group by a.id, r.id
-		order by a.published_at desc, a.id desc
+		order by
+			date_trunc('day', a.published_at) desc,
+			`+reactionRankSQL+` desc,
+			a.published_at desc,
+			a.id desc
 		limit $2
-	`, input.Now, input.Limit, cursorPublishedAt(input.Cursor), cursorID(input.Cursor))
+	`, input.Now, input.Limit, cursorPublishedAt(input.Cursor), cursorID(input.Cursor), cursorRank(input.Cursor))
 	if err != nil {
 		return nil, err
 	}
@@ -128,10 +141,7 @@ func (r *Repository) ListPublishedByIDs(ctx context.Context, input ports.ListPub
 }
 
 func (r *Repository) ListPopular(ctx context.Context, input ports.ListPopularInput) ([]domain.Draft, error) {
-	popularitySQL := `(
-		coalesce((select sum(rr.value)::int from reactions rr where rr.target_type = 'article' and rr.target_id = a.id), 0) * 5
-		+ coalesce((select count(*)::int from comments c where c.article_id = a.id and c.status = 'active'), 0)
-	)`
+	popularitySQL := popularityScoreSQL()
 	rows, err := r.tx.Querier(ctx).Query(ctx, draftSelectSQLWithRank(popularitySQL)+`
 		where a.status = 'published'
 			and a.published_at <= $1
@@ -154,7 +164,7 @@ func (r *Repository) ListPersonalizedFeed(ctx context.Context, input ports.Perso
 	rankSQL := `case when exists (
 			select 1 from follows f
 			where f.follower_id = $2 and f.author_id = a.author_id
-		) then 0 else 1 end`
+		) and a.published_at >= $1 - interval '3 days' then 0 else 1 end`
 	rows, err := r.tx.Querier(ctx).Query(ctx, draftSelectSQLWithRank(rankSQL)+`
 		where a.status = 'published'
 			and a.published_at <= $1
@@ -312,9 +322,59 @@ func (r *Repository) SubmitDraft(ctx context.Context, input ports.SubmitDraftInp
 		if err := r.notifyArticlePublished(ctx, input.ArticleID, input.AuthorID); err != nil {
 			return domain.Draft{}, err
 		}
+		if input.RewardPublication {
+			if err := r.rewardModeratedPublication(ctx, input.ArticleID, input.AuthorID); err != nil {
+				return domain.Draft{}, err
+			}
+		}
 	}
 
 	return r.FindDraftForAuthor(ctx, input.ArticleID, input.AuthorID)
+}
+
+func (r *Repository) ArchiveDraft(ctx context.Context, input ports.ArchiveDraftInput) (domain.Draft, error) {
+	q := r.tx.Querier(ctx)
+	tag, err := q.Exec(ctx, `
+		update articles
+		set
+			status = 'archived',
+			moderation_required = false,
+			scheduled_at = null,
+			updated_at = now()
+		where id = $1
+			and author_id = $2
+			and status in ('draft', 'in_moderation', 'ready_to_publish', 'archived')
+	`, input.ArticleID, input.AuthorID)
+	if err != nil {
+		return domain.Draft{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.Draft{}, domain.ErrArticleNotEditable
+	}
+	if _, err := q.Exec(ctx, `
+		update moderation_submissions
+		set status = 'cancelled', updated_at = now()
+		where article_id = $1
+			and author_id = $2
+			and status = 'pending'
+	`, input.ArticleID, input.AuthorID); err != nil {
+		return domain.Draft{}, err
+	}
+	return r.FindDraftForAuthor(ctx, input.ArticleID, input.AuthorID)
+}
+
+func (r *Repository) CountPublishedByAuthorSince(ctx context.Context, input ports.CountPublishedByAuthorSinceInput) (int, error) {
+	var count int
+	if err := r.tx.Querier(ctx).QueryRow(ctx, `
+		select count(*)::int
+		from articles
+		where author_id = $1
+			and status = 'published'
+			and published_at >= $2
+	`, input.AuthorID, input.Since).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *Repository) notifyArticlePublished(ctx context.Context, articleID, authorID string) error {
@@ -337,6 +397,33 @@ func (r *Repository) notifyArticlePublished(ctx context.Context, articleID, auth
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) rewardModeratedPublication(ctx context.Context, articleID, authorID string) error {
+	q := r.tx.Querier(ctx)
+	tag, err := q.Exec(ctx, `
+		insert into rating_events (user_id, source_type, source_id, delta, reason)
+		select $2, 'article', $1, 50, 'article_published'
+		where not exists (
+			select 1
+			from rating_events
+			where source_type = 'article'
+				and source_id = $1
+				and reason = 'article_published'
+		)
+	`, articleID, authorID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return nil
+	}
+	_, err = q.Exec(ctx, `
+		update users
+		set rating = rating + 50, updated_at = now()
+		where id = $1
+	`, authorID)
+	return err
 }
 
 func (r *Repository) createRevision(ctx context.Context, articleID, authorID string, version int, title string, content json.RawMessage, excerpt string, status domain.RevisionStatus) (string, error) {
@@ -444,6 +531,17 @@ func draftSelectSQLWithRank(rankSQL string) string {
 		left join article_revision_tags rt on rt.revision_id = r.id
 		left join tags t on t.id = rt.tag_id
 	`
+}
+
+func reactionScoreSQL() string {
+	return `coalesce((select sum(rr.value)::int from reactions rr where rr.target_type = 'article' and rr.target_id = a.id), 0)`
+}
+
+func popularityScoreSQL() string {
+	return `(
+		` + reactionScoreSQL() + ` * 5
+		+ coalesce((select count(*)::int from comments c where c.article_id = a.id and c.status = 'active'), 0)
+	)`
 }
 
 type draftScanner interface {

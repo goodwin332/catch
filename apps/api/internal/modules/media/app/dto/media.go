@@ -8,5 +8,6 @@ type FileResponse struct {
 	Width        *int   `json:"width,omitempty"`
 	Height       *int   `json:"height,omitempty"`
 	URL          string `json:"url"`
+	PreviewURL   string `json:"preview_url,omitempty"`
 	CreatedAt    string `json:"created_at"`
 }

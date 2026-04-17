@@ -24,7 +24,7 @@ func NewHandler(service *app.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, log *slog.Logger, requireAuth func(http.Handler) http.Handler, requireCSRF func(http.Handler) http.Handler) {
-	reportLimiter := httpx.NewRateLimiter(10, time.Minute).Middleware()
+	reportLimiter := httpx.NewRateLimiter(1, 5*time.Minute).Middleware()
 
 	r.Group(func(r chi.Router) {
 		r.Use(requireAuth)

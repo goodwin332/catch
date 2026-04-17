@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	accessdomain "catch/apps/api/internal/modules/access/domain"
 	"catch/apps/api/internal/modules/comments/app"
@@ -22,12 +23,14 @@ func NewHandler(service *app.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router, log *slog.Logger, requireAuth func(http.Handler) http.Handler, requireCSRF func(http.Handler) http.Handler) {
+	commentLimiter := httpx.NewRateLimiter(5, time.Minute).Middleware()
+
 	r.Get("/articles/{articleID}/comments", httpx.Wrap(log, h.list))
 	r.Get("/comments/{commentID}", httpx.Wrap(log, h.get))
 	r.Group(func(r chi.Router) {
 		r.Use(requireAuth)
 		r.Use(requireCSRF)
-		r.Post("/articles/{articleID}/comments", httpx.Wrap(log, h.create))
+		r.With(commentLimiter).Post("/articles/{articleID}/comments", httpx.Wrap(log, h.create))
 		r.Patch("/comments/{commentID}", httpx.Wrap(log, h.update))
 	})
 }

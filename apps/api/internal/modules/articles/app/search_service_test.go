@@ -132,6 +132,14 @@ func (*searchRepositoryStub) SubmitDraft(context.Context, ports.SubmitDraftInput
 	panic("not implemented")
 }
 
+func (*searchRepositoryStub) ArchiveDraft(context.Context, ports.ArchiveDraftInput) (domain.Draft, error) {
+	panic("not implemented")
+}
+
+func (*searchRepositoryStub) CountPublishedByAuthorSince(context.Context, ports.CountPublishedByAuthorSinceInput) (int, error) {
+	panic("not implemented")
+}
+
 func articleDraft(id, title string) domain.Draft {
 	publishedAt := time.Date(2026, 4, 16, 12, 0, 0, 0, time.UTC)
 	return domain.Draft{

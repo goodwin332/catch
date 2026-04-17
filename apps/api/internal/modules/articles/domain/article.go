@@ -59,6 +59,7 @@ var (
 	ErrArticleNotFound    = errors.New("article not found")
 	ErrArticleNotEditable = errors.New("article not editable")
 	ErrPublishWindow      = errors.New("invalid publish window")
+	ErrDailyPublishLimit  = errors.New("daily publish limit reached")
 )
 
 func NormalizeTitle(value string) (string, error) {
@@ -82,8 +83,31 @@ func ValidateDocument(value json.RawMessage) (json.RawMessage, error) {
 	if decoded == nil {
 		return nil, ErrInvalidDocument
 	}
+	if !validateArticleBlocks(decoded) {
+		return nil, ErrInvalidDocument
+	}
 
 	return value, nil
+}
+
+func validateArticleBlocks(document map[string]any) bool {
+	blocks, ok := document["blocks"].([]any)
+	if !ok {
+		return false
+	}
+	for _, rawBlock := range blocks {
+		block, ok := rawBlock.(map[string]any)
+		if !ok {
+			continue
+		}
+		if block["type"] != "geo_point" {
+			continue
+		}
+		if radius, ok := block["radius_meters"].(float64); ok && (radius <= 0 || radius > 10000) {
+			return false
+		}
+	}
+	return true
 }
 
 func ExtractMediaFileIDs(value json.RawMessage) ([]string, error) {

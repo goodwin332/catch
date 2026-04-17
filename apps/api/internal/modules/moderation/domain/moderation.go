@@ -24,6 +24,8 @@ var (
 	ErrInvalidRejection = errors.New("invalid moderation rejection")
 	ErrNotFound         = errors.New("moderation item not found")
 	ErrAlreadyDecided   = errors.New("moderation already decided")
+	ErrOpenThreads      = errors.New("moderation has open threads")
+	ErrAuthorAction     = errors.New("article author cannot perform moderation action")
 )
 
 type Submission struct {
@@ -33,6 +35,8 @@ type Submission struct {
 	AuthorID        string
 	Status          SubmissionStatus
 	RejectionReason string
+	ApprovalCount   int
+	OpenThreadCount int
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

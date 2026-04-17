@@ -20,6 +20,8 @@ type Repository interface {
 	SearchPublished(context.Context, SearchPublishedInput) ([]domain.Draft, error)
 	UpdateDraftRevision(context.Context, UpdateDraftRevisionInput) (domain.Draft, error)
 	SubmitDraft(context.Context, SubmitDraftInput) (domain.Draft, error)
+	ArchiveDraft(context.Context, ArchiveDraftInput) (domain.Draft, error)
+	CountPublishedByAuthorSince(context.Context, CountPublishedByAuthorSinceInput) (int, error)
 }
 
 type CreateDraftInput struct {
@@ -47,6 +49,17 @@ type SubmitDraftInput struct {
 	ModerationRequired bool
 	ScheduledAt        *time.Time
 	PublishedAt        *time.Time
+	RewardPublication  bool
+}
+
+type ArchiveDraftInput struct {
+	ArticleID string
+	AuthorID  string
+}
+
+type CountPublishedByAuthorSinceInput struct {
+	AuthorID string
+	Since    time.Time
 }
 
 type ListPublishedInput struct {

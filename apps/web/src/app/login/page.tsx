@@ -40,6 +40,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </button>
         </form>
         <div className="auth-divider">или</div>
+        <div className="oauth-grid" aria-label="Вход через OAuth">
+          <a className="secondary-button auth-button" href="/api/auth/oauth/google/start?return_to=/">
+            Google
+          </a>
+          <a className="secondary-button auth-button" href="/api/auth/oauth/vk/start?return_to=/">
+            VK
+          </a>
+          <a className="secondary-button auth-button" href="/api/auth/oauth/yandex/start?return_to=/">
+            Yandex
+          </a>
+        </div>
         <form action={devLogin}>
           <button className="primary-button auth-button" type="submit">
             Войти как dev-пользователь
@@ -62,6 +73,10 @@ function errorMessage(error: string) {
       return "Укажите код из письма.";
     case "code-invalid":
       return "Код не подошёл или истёк.";
+    case "oauth-start-failed":
+      return "OAuth-провайдер не настроен или временно недоступен.";
+    case "oauth-callback-failed":
+      return "Не удалось завершить вход через OAuth.";
     default:
       return "Не удалось выполнить вход.";
   }

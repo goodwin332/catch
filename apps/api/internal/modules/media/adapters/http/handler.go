@@ -24,6 +24,7 @@ func NewHandler(service *app.Service, maxUploadBytes int64) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router, log *slog.Logger, requireAuth func(http.Handler) http.Handler, requireCSRF func(http.Handler) http.Handler) {
 	r.Get("/media/files/{fileID}", httpx.Wrap(log, h.get))
 	r.Get("/media/files/{fileID}/content", httpx.Wrap(log, h.content))
+	r.Get("/media/files/{fileID}/preview", httpx.Wrap(log, h.preview))
 
 	r.Group(func(r chi.Router) {
 		r.Use(requireAuth)
@@ -73,6 +74,19 @@ func (h *Handler) content(w http.ResponseWriter, r *http.Request) error {
 	}
 	w.Header().Set("Content-Type", file.MimeType)
 	w.Header().Set("Content-Disposition", "inline; filename=\""+file.OriginalName+"\"")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+	return nil
+}
+
+func (h *Handler) preview(w http.ResponseWriter, r *http.Request) error {
+	file, data, mimeType, err := h.service.Preview(r.Context(), chi.URLParam(r, "fileID"))
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", mimeType)
+	w.Header().Set("Content-Disposition", "inline; filename=\"preview-"+file.OriginalName+"\"")
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(data)
 	return nil

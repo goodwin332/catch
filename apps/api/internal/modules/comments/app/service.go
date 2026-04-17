@@ -19,7 +19,7 @@ type Service struct {
 }
 
 func NewService(repo ports.Repository) *Service {
-	return &Service{repo: repo, now: time.Now, editWindow: 15 * time.Minute}
+	return &Service{repo: repo, now: time.Now, editWindow: time.Hour}
 }
 
 func (s *Service) ListByArticle(ctx context.Context, articleID string) (dto.CommentListResponse, error) {

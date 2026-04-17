@@ -13,12 +13,12 @@
 
 - Backend: Go 1.26.
 - Frontend: Next.js 16, React 19, TypeScript.
-- Styling: Tailwind with local build and design tokens.
+- Styling: CSS design tokens based on `design/uikit.html`; Tailwind is not required for MVP.
 - Primary database: PostgreSQL 18.
 - Search: Meilisearch for public search, PostgreSQL FTS for fallback and scoped private searches.
 - Realtime: Centrifugo/WebSocket target, SSE/polling fallback.
 - Jobs: Go worker with transactional outbox.
-- Storage: S3-compatible object storage; MinIO for local development.
+- Storage: local filesystem for development by default, S3-compatible object storage for production; MinIO is available in Docker Compose for local S3 checks.
 - Contracts: OpenAPI with generated TypeScript client.
 - Observability: OpenTelemetry, structured JSON logs, Prometheus metrics.
 - Repository: monorepo.
@@ -159,17 +159,14 @@ Design source is `design/uikit.html` plus page mockups in `design/`.
 
 ### UI rules
 
-- Use local Tailwind build, not CDN.
 - Use design tokens, not hardcoded colors in feature components.
-- Keep `darkMode: class`.
+- Theme is controlled by `html[data-theme]`.
 - Default theme follows OS preference.
 - User theme choice overrides OS.
-- Major panels use `rounded-2xl`.
-- Inputs/buttons use `rounded-xl`.
-- Small icon controls use `rounded-lg`.
-- Public page gutters: `px-4 sm:px-6 lg:px-8`.
-- Main content max width: `max-w-7xl`.
-- Editor max width: `max-w-4xl`.
+- Panels, cards, buttons and inputs use radius up to `8px`.
+- Public page gutters adapt from `16px` on mobile to `24px` on desktop.
+- Main content max width is `1180px`.
+- Editor uses a two-column desktop layout with single-column mobile fallback.
 - Article body uses readable typography with relaxed line-height.
 
 ### Components
@@ -260,4 +257,3 @@ Dark theme is required for every component.
 - Draft/private media is not public.
 - Rate limits are enforced server-side.
 - Admin, moderation, reports, sanctions and rating-sensitive changes are audited.
-

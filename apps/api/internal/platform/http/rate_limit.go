@@ -70,6 +70,9 @@ func (l *RateLimiter) allow(key string, now time.Time) bool {
 }
 
 func rateLimitKey(r *http.Request) string {
+	if user, ok := AuthenticatedUserFromContext(r.Context()); ok && user.ID != "" {
+		return "user:" + user.ID + ":" + r.Method + ":" + r.URL.Path
+	}
 	return clientIP(r) + ":" + r.Method + ":" + r.URL.Path
 }
 

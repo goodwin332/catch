@@ -50,7 +50,7 @@ func (r *Repository) ListBookmarkLists(ctx context.Context, userID string) ([]do
 func (r *Repository) ListBookmarkedArticles(ctx context.Context, input ports.ListBookmarkedArticlesInput) ([]domain.Article, error) {
 	pattern := "%" + strings.ToLower(input.Query) + "%"
 	rows, err := r.tx.Querier(ctx).Query(ctx, `
-		select bl.id::text, a.id::text, a.author_id::text, r.title, r.excerpt,
+		select bl.id::text, bl.name, a.id::text, a.author_id::text, r.title, r.excerpt,
 			coalesce(array_agg(t.name order by rt.position) filter (where t.id is not null), '{}'),
 			a.published_at, bi.created_at
 		from bookmark_items bi
@@ -74,7 +74,7 @@ func (r *Repository) ListBookmarkedArticles(ctx context.Context, input ports.Lis
 					where rt2.revision_id = r.id and lower(t2.name) like $4
 				)
 			)
-		group by bl.id, a.id, r.id, bi.created_at
+		group by bl.id, bl.name, a.id, r.id, bi.created_at
 		order by bi.created_at desc
 		limit $5
 	`, input.UserID, input.ListID, input.Query, pattern, input.Limit)
@@ -88,6 +88,7 @@ func (r *Repository) ListBookmarkedArticles(ctx context.Context, input ports.Lis
 		var article domain.Article
 		if err := rows.Scan(
 			&article.ListID,
+			&article.ListName,
 			&article.ArticleID,
 			&article.AuthorID,
 			&article.Title,

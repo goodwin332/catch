@@ -39,6 +39,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, log *slog.Logger, requireAuth fun
 			r.Post("/drafts", httpx.Wrap(log, h.createDraft))
 			r.Patch("/drafts/{articleID}", httpx.Wrap(log, h.updateDraft))
 			r.Post("/drafts/{articleID}/submit", httpx.Wrap(log, h.submitDraft))
+			r.Post("/drafts/{articleID}/archive", httpx.Wrap(log, h.archiveDraft))
 		})
 	})
 }
@@ -171,6 +172,19 @@ func (h *Handler) submitDraft(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	response, err := h.service.SubmitDraft(r.Context(), actor, chi.URLParam(r, "articleID"), request)
+	if err != nil {
+		return err
+	}
+	return httpx.JSON(w, http.StatusOK, response)
+}
+
+func (h *Handler) archiveDraft(w http.ResponseWriter, r *http.Request) error {
+	actor, err := actorFromRequest(r)
+	if err != nil {
+		return err
+	}
+
+	response, err := h.service.ArchiveDraft(r.Context(), actor, chi.URLParam(r, "articleID"))
 	if err != nil {
 		return err
 	}

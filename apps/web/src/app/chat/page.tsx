@@ -23,13 +23,19 @@ export default async function ChatPage() {
         {data.items.length === 0 ? (
           <EmptyState title="Диалогов пока нет" text="Личные сообщения появятся здесь после первого разговора." />
         ) : (
-          <div className="compact-list">
+          <div className="chat-layout">
+            <aside className="chat-sidebar" aria-label="Диалоги">
             {data.items.map((item) => (
               <a href={`/chat/${item.id}`} key={item.id}>
                 <strong>Диалог {item.id}</strong>
                 <span>Непрочитано: {item.unread_count}</span>
               </a>
             ))}
+            </aside>
+            <div className="chat-main chat-placeholder">
+              <h2>Выберите диалог</h2>
+              <p>Сообщения откроются рядом со списком бесед.</p>
+            </div>
           </div>
         )}
       </section>

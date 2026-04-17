@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	accessdomain "catch/apps/api/internal/modules/access/domain"
 	"catch/apps/api/internal/modules/articles/app/dto"
@@ -264,10 +266,21 @@ func (s *Service) SubmitDraft(ctx context.Context, actor accessdomain.Principal,
 		if scheduledAt != nil {
 			publishedAt = *scheduledAt
 		}
+		publishedToday, err := s.repo.CountPublishedByAuthorSince(ctx, ports.CountPublishedByAuthorSinceInput{
+			AuthorID: actor.UserID,
+			Since:    startOfDay(now),
+		})
+		if err != nil {
+			return dto.ArticleDraftResponse{}, err
+		}
+		if publishedToday >= 3 {
+			return dto.ArticleDraftResponse{}, mapArticleError(domain.ErrDailyPublishLimit)
+		}
 		input.RevisionStatus = domain.RevisionStatusPublished
 		input.ArticleStatus = domain.ArticleStatusPublished
 		input.ModerationRequired = false
 		input.PublishedAt = &publishedAt
+		input.RewardPublication = existing.Status == domain.ArticleStatusReadyToPublish
 	}
 
 	var draft domain.Draft
@@ -283,6 +296,33 @@ func (s *Service) SubmitDraft(ctx context.Context, actor accessdomain.Principal,
 		return dto.ArticleDraftResponse{}, mapArticleError(err)
 	}
 
+	return mapDraft(draft), nil
+}
+
+func (s *Service) ArchiveDraft(ctx context.Context, actor accessdomain.Principal, articleID string) (dto.ArticleDraftResponse, error) {
+	existing, err := s.repo.FindDraftForAuthor(ctx, articleID, actor.UserID)
+	if err != nil {
+		return dto.ArticleDraftResponse{}, mapArticleError(err)
+	}
+	if existing.Status != domain.ArticleStatusDraft &&
+		existing.Status != domain.ArticleStatusInModeration &&
+		existing.Status != domain.ArticleStatusReadyToPublish &&
+		existing.Status != domain.ArticleStatusArchived {
+		return dto.ArticleDraftResponse{}, mapArticleError(domain.ErrArticleNotEditable)
+	}
+
+	var draft domain.Draft
+	err = s.tx.WithinTx(ctx, func(ctx context.Context) error {
+		archived, err := s.repo.ArchiveDraft(ctx, ports.ArchiveDraftInput{ArticleID: articleID, AuthorID: actor.UserID})
+		if err != nil {
+			return err
+		}
+		draft = archived
+		return nil
+	})
+	if err != nil {
+		return dto.ArticleDraftResponse{}, mapArticleError(err)
+	}
 	return mapDraft(draft), nil
 }
 
@@ -317,8 +357,18 @@ func parsePublishAt(value *string, now time.Time) (*time.Time, error) {
 	return &parsed, nil
 }
 
-func excerptFromDocument(_ json.RawMessage) string {
-	return ""
+func excerptFromDocument(value json.RawMessage) string {
+	var decoded any
+	if err := json.Unmarshal(value, &decoded); err != nil {
+		return ""
+	}
+	text := strings.Join(extractDocumentText(decoded, 400), " ")
+	text = strings.TrimSpace(spacePattern.ReplaceAllString(text, " "))
+	if utf8.RuneCountInString(text) <= 240 {
+		return text
+	}
+	runes := []rune(text)
+	return strings.TrimSpace(string(runes[:240])) + "..."
 }
 
 func mapDraft(draft domain.Draft) dto.ArticleDraftResponse {
@@ -330,6 +380,7 @@ func mapDraft(draft domain.Draft) dto.ArticleDraftResponse {
 		Title:              draft.Title,
 		Content:            draft.Content,
 		Excerpt:            draft.Excerpt,
+		CoverURL:           coverURLFromDocument(draft.Content),
 		Tags:               draft.Tags,
 		Version:            draft.Version,
 		ScheduledAt:        formatTimePtr(draft.ScheduledAt),
@@ -348,6 +399,7 @@ func mapPublicArticle(article domain.Draft) dto.PublicArticleResponse {
 		Title:         article.Title,
 		Content:       article.Content,
 		Excerpt:       article.Excerpt,
+		CoverURL:      coverURLFromDocument(article.Content),
 		Tags:          article.Tags,
 		ReactionsUp:   article.ReactionsUp,
 		ReactionsDown: article.ReactionsDown,
@@ -373,6 +425,7 @@ func mapArticleList(articles []domain.Draft, limit int) dto.ArticleListResponse 
 			AuthorID:      article.AuthorID,
 			Title:         article.Title,
 			Excerpt:       article.Excerpt,
+			CoverURL:      coverURLFromDocument(article.Content),
 			Tags:          article.Tags,
 			ReactionsUp:   article.ReactionsUp,
 			ReactionsDown: article.ReactionsDown,
@@ -480,7 +533,63 @@ func mapArticleError(err error) error {
 		return httpx.NewError(409, httpx.CodeConflict, "Статью нельзя редактировать в текущем статусе")
 	case errors.Is(err, domain.ErrPublishWindow):
 		return httpx.ValidationError("Дата публикации должна быть в будущем и не дальше одного месяца", map[string]any{"publish_at": "invalid"})
+	case errors.Is(err, domain.ErrDailyPublishLimit):
+		return httpx.NewError(429, httpx.CodeRateLimited, "Можно публиковать не больше трёх статей в сутки")
 	default:
 		return err
 	}
+}
+
+var spacePattern = regexp.MustCompile(`\s+`)
+
+func startOfDay(value time.Time) time.Time {
+	year, month, day := value.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, value.Location())
+}
+
+func extractDocumentText(value any, maxRunes int) []string {
+	parts := make([]string, 0)
+	collectDocumentText(value, maxRunes, &parts)
+	return parts
+}
+
+func collectDocumentText(value any, maxRunes int, parts *[]string) {
+	if utf8.RuneCountInString(strings.Join(*parts, " ")) >= maxRunes {
+		return
+	}
+	switch typed := value.(type) {
+	case map[string]any:
+		for _, key := range []string{"text", "body", "caption", "title"} {
+			if text, ok := typed[key].(string); ok && strings.TrimSpace(text) != "" {
+				*parts = append(*parts, text)
+			}
+		}
+		for _, nested := range typed {
+			collectDocumentText(nested, maxRunes, parts)
+		}
+	case []any:
+		for _, nested := range typed {
+			collectDocumentText(nested, maxRunes, parts)
+		}
+	}
+}
+
+func coverURLFromDocument(value json.RawMessage) string {
+	var decoded map[string]any
+	if err := json.Unmarshal(value, &decoded); err != nil {
+		return ""
+	}
+	blocks, _ := decoded["blocks"].([]any)
+	for _, rawBlock := range blocks {
+		block, ok := rawBlock.(map[string]any)
+		if !ok || block["type"] != "image" {
+			continue
+		}
+		for _, key := range []string{"preview_url", "url"} {
+			if url, ok := block[key].(string); ok && strings.TrimSpace(url) != "" {
+				return strings.TrimSpace(url)
+			}
+		}
+	}
+	return ""
 }

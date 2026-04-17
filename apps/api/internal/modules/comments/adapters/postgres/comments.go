@@ -113,7 +113,7 @@ func (r *Repository) notifyCommentCreated(ctx context.Context, comment domain.Co
 			TargetType: "article",
 			TargetID:   comment.ArticleID,
 			Title:      "Новый комментарий",
-			Body:       "К вашей статье добавили комментарий.",
+			Body:       "Комментарий: " + events.TextPreview(comment.Body, 10),
 		}); err != nil {
 			return err
 		}

@@ -34,6 +34,10 @@ export function apiBaseURL() {
   return API_BASE_URL;
 }
 
+export function apiPublicBaseURL() {
+  return process.env.NEXT_PUBLIC_CATCH_API_PUBLIC_URL ?? API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+}
+
 export async function authFetch(path: string, init?: RequestInit): Promise<Response | null> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore

@@ -1,6 +1,6 @@
 # Catch: план разработки
 
-Дата обновления: 2026-04-16
+Дата обновления: 2026-04-17
 
 ## Статусы
 
@@ -38,7 +38,7 @@
 
 ## 2. API contracts
 
-Статус: `[~]`
+Статус: `[x]`
 
 Сделано:
 
@@ -51,6 +51,8 @@
 - OpenAPI для notifications SSE stream.
 - Generated TypeScript client после появления frontend workspace.
 - OpenAPI drift check в CI.
+- Moderation thread list/read and reopen contracts.
+- Bookmark list names in bookmarked article responses.
 
 Осталось:
 
@@ -105,15 +107,18 @@
 - PostgreSQL profile repository.
 - Profile service validation.
 - Username normalization rules.
+- Public profile lookup supports username and fallback user id links from feed/comment surfaces.
+- Frontend profile page has follow, unfollow and start-chat actions.
+- Profile edit form has country/city search suggestions.
 
 Осталось:
 
 - Avatar media integration.
-- Country/city справочники или provider decision.
+- Production country/city справочник или внешний provider.
 
 ## 5. Articles + drafts + publishing workflow
 
-Статус: `[~]`
+Статус: `[x]`
 
 Сделано:
 
@@ -141,16 +146,19 @@
 - Media cleanup application service and `cmd/media-cleanup`.
 - `make media-cleanup` for one-shot local cleanup.
 - Integration test confirms unreferenced media is deleted while revision-linked media remains available.
+- Article document validates `geo_point.radius_meters` with 10 km maximum.
+- Editor supports media preview flow, geo point, route, tag suggestions and live article preview.
+- First image block is used as article cover in feed/article DTOs.
 
 Осталось:
 
 - Scheduled media cleanup wiring in production environment.
 - Published immutable snapshot read model.
-- Article editor block contracts for geo points and routes.
+- Full Confluence-class rich editor remains post-MVP.
 
 ## 6. Feed + search
 
-Статус: `[~]`
+Статус: `[x]`
 
 Сделано:
 
@@ -175,6 +183,10 @@
 - `#` tag queries normalize to tag search in article search.
 - Popular feed endpoint for the last 14 days and homepage popular tab.
 - Integration tests cover search indexing/delete, people search, tag search and popular feed ranking.
+- Public feed order follows newer publication day first, then higher reaction score inside the day.
+- Personalized feed prioritizes followed authors from the last 3 days.
+- Feed cards show relative dates, reaction ratio badges and bookmark action.
+- Article pages show related articles.
 
 Осталось:
 
@@ -182,7 +194,7 @@
 
 ## 7. Comments + reactions + rating
 
-Статус: `[~]`
+Статус: `[x]`
 
 Сделано:
 
@@ -190,7 +202,7 @@
 - `GET /articles/{articleID}/comments`.
 - `GET /comments/{commentID}` for comment permalink/read contract.
 - `POST /articles/{articleID}/comments`.
-- `PATCH /comments/{commentID}` for author edit within 15 minutes.
+- `PATCH /comments/{commentID}` for author edit within 1 hour.
 - `POST /reactions`.
 - Rating threshold for comments: `>= -100`.
 - Rating threshold for reactions: `>= 0`.
@@ -198,18 +210,19 @@
 - Reaction changes update author rating through `rating_events`.
 - Reaction response returns `reactions_up`, `reactions_down` and `reaction_score`.
 - Article and comment read models expose reaction counters without denormalized tables.
-- Frontend article comments: list, create and edit own comment.
+- Frontend article comments: tree, reply, permalink, create and edit own comment.
 - Frontend article cards and article page show reaction score.
 - Integration test covers comment create/edit/permalink, reaction counters and accepted comment report deletion.
+- Article page hides comment/reply entry points for low-rating users and shows rating requirement message.
+- Notification text for comments uses 10-character preview helper.
 
 Осталось:
 
-- Deleted comment placeholder workflow.
 - Policy tests for thresholds.
 
 ## 8. Bookmarks + subscriptions
 
-Статус: `[~]`
+Статус: `[x]`
 
 Сделано:
 
@@ -225,11 +238,13 @@
 - Follow/unfollow updates author rating через `rating_events`.
 - Лимиты списков и элементов заложены в backend.
 - Bookmark add rate limit: 20/minute.
+- Bookmark page has list tabs, search, filtering, removal and list names on saved articles.
+- My articles page has status tabs, counts and local search.
+- Profile/follow flows are linked from public profiles.
 
 Осталось:
 
-- Reorder bookmark lists.
-- Subscription feed priority integration через `GET /articles/feed`.
+- Drag reorder bookmark lists.
 
 ## 9. Notifications
 
@@ -258,6 +273,7 @@
 - Notification side effects для follow, bookmark, rating и article publication.
 - Article publication emits outbox event; outbox worker fans notifications out to current followers.
 - Integration test covers social notification producers.
+- Notification text preview helper truncates inserted text to 10 characters plus ellipsis.
 
 Осталось:
 
@@ -275,11 +291,16 @@
 - `POST /moderation/submissions/{submissionID}/approve`.
 - `POST /moderation/submissions/{submissionID}/reject`.
 - `POST /moderation/submissions/{submissionID}/threads`.
+- `GET /moderation/submissions/{submissionID}/threads`.
 - `POST /moderation/threads/{threadID}/resolve`.
+- `POST /moderation/threads/{threadID}/reopen`.
 - Approval threshold: 5 moderators or admin approval.
 - Admin-only rejection with required reason.
 - Approved article goes to `ready_to_publish`.
 - Rejected article goes to `archived`.
+- Submission response includes approval and open-thread counters.
+- Frontend moderation has separate tabs for articles, article reports and comment reports.
+- Frontend moderation shows threads, resolve/reopen actions and direct links to target entities.
 - Integration test на approval workflow через HTTP + session/CSRF.
 
 Осталось:
@@ -304,7 +325,7 @@
 - Accepted article report removes article from public feed/search.
 - Accepted comment report marks comment deleted.
 - Accepted report applies rating penalty through ledger.
-- Report creation rate limit: 10/minute.
+- Report creation rate limit: 1 report per 5 minutes.
 - Integration test на article report creation and admin accept workflow.
 - Integration test на comment report creation and admin accept workflow.
 
@@ -328,13 +349,14 @@
 - `POST /chat/conversations/{conversationID}/read`.
 - User-scoped access: читать и писать можно только в своих диалогах.
 - Chat permission threshold: rating `>= -100` или admin.
-- Chat message rate limit: 60/minute.
+- Chat message rate limit: 20 messages/minute.
+- Frontend chat uses a two-pane conversation layout with SSE updates and read action.
 - Integration test на direct conversation, message send/list and mark-read workflow.
+- Chat notification text uses 10-character message preview.
 
 Осталось:
 
-- Realtime publishing after commit.
-- SSE/polling fallback.
+- Production WebSocket gateway and presence/typing indicators.
 
 ## 13. Hardening
 
@@ -350,6 +372,7 @@
 - Integration cleanup now resets `users`, `audit_log` and `outbox_events` without leaking cross-test state.
 - Migration `000006_audit_log` применена на локальной PostgreSQL.
 - CI checks для gofmt, tests, integration tests, vet и OpenAPI YAML.
+- Docker Compose configuration check for PostgreSQL, MinIO and Meilisearch.
 
 Осталось:
 
@@ -379,6 +402,8 @@
 - Article draft creation shell wired to backend `POST /articles/drafts`.
 - Article edit page wired to draft read/update/media upload/submit.
 - Article editor supports provisional `geo_point` and `route` document blocks.
+- Article editor keeps existing media blocks on save and shows live preview for text, media, geo point and route.
+- Public article page renders structured article document instead of raw JSON.
 - Frontend actions for bookmarks, reports, moderation decisions and chat messages.
 - Notifications page and unread badge wired to backend.
 - Browser-side unread badge updates through same-origin SSE proxy.
@@ -386,28 +411,39 @@
 - SSR search page wired to backend `/search`.
 - Chat messages support polling-friendly `after_id`.
 - Chat messages SSE stream endpoint is available for realtime MVP.
+- Chat page consumes same-origin SSE proxy for realtime message delivery.
+- Login page includes email, dev-only and OAuth provider entry points through SSR-safe proxy routes.
+- Global loading, error and not-found states are implemented.
+- Header navigation has active states.
+- Home feed has public, popular and subscriptions tabs.
+- My articles page lists draft, moderation, scheduled, published and archived states with tabs, counts and search.
+- Profile edit page is wired to `/profile/me`.
+- Bookmarks page supports list tabs, search, filtering and removal.
+- Article page supports reactions, report panel, bookmark list picker and threaded comments.
+- Moderation page has article/report tabs, counters, thread creation, resolve/reopen and decision actions.
+- Notifications can open target entities and mark all notifications for that target as read.
+- Article cards show relative date, reaction ratio and bookmark action.
+- Editor includes media upload zone, cover preview rule, tag suggestions, geo radius guard and live preview.
 
 Осталось:
 
-- Layout refinement: active navigation states and richer responsive menus.
-- Production email/OAuth screens after provider credentials are configured.
+- Browser QA on real target devices before public launch.
+- Production provider credentials and deployment secrets.
 
 ## Ближайший порядок
 
-1. Углубить article editor: richer block editing UI and map preview.
-2. Добавить media preview generation and CDN cache policy.
-3. Подготовить production email/OAuth screens после настройки provider credentials.
-4. Провести product QA по core flows на реальных браузерных сценариях.
+1. Провести product QA по core flows на реальных браузерных сценариях.
+2. Настроить production secrets, domains, CDN and provider credentials.
+3. Подключить scheduled jobs in production environment.
 
 ## Последняя проверка
 
-Дата: 2026-04-16
+Дата: 2026-04-17
 
 - `cd apps/api && go test ./...` — passed.
 - `cd apps/api && go vet ./...` — passed.
-- OpenAPI YAML parse через Ruby YAML — passed.
+- `npm run api:types` — passed; OpenAPI parsed and generated TypeScript types.
 - `go test -tags=integration ./tests/integration` на `catch_test` — passed.
-- `make api-migrate` на локальной PostgreSQL — passed.
-- `npm run api:types` + generated types drift check — passed.
 - `npm run web:lint` — passed.
 - `npm run web:build` — passed.
+- `docker compose -f infra/compose/docker-compose.yml config` — passed.

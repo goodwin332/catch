@@ -12,6 +12,7 @@ type BookmarkListsResponse struct {
 
 type BookmarkedArticleResponse struct {
 	ListID       string   `json:"list_id"`
+	ListName     string   `json:"list_name"`
 	ArticleID    string   `json:"article_id"`
 	AuthorID     string   `json:"author_id"`
 	Title        string   `json:"title"`

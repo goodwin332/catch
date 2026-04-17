@@ -1,7 +1,7 @@
 import { logout } from "@/app/login/actions";
 import { authFetch, getCurrentUser } from "@/lib/auth";
 import { ThemeToggle } from "./theme-toggle";
-import { NotificationBadge } from "./notification-badge";
+import { MainNav } from "./main-nav";
 import type { components } from "@/lib/api-types";
 
 type UnreadCount = components["schemas"]["UnreadNotificationCount"];
@@ -21,33 +21,34 @@ export async function AppHeader() {
         <form className="search" action="/search">
           <input name="q" placeholder="Поиск статей, #тегов или @авторов..." aria-label="Поиск" />
         </form>
-        <nav className="main-nav" aria-label="Основная навигация">
-          <a href="/bookmarks">Закладки</a>
-          <a href="/chat">Чат</a>
-          {currentUser ? (
-            <a href="/notifications" className="nav-with-badge">
-              Уведомления
-              <NotificationBadge initialCount={unread} />
-            </a>
-          ) : null}
-          {currentUser?.capabilities.can_moderate ? <a href="/moderation">Модерация</a> : null}
-        </nav>
-        <ThemeToggle />
+        <MainNav authenticated={Boolean(currentUser)} canModerate={Boolean(currentUser?.capabilities.can_moderate)} unread={unread} />
         {currentUser?.capabilities.can_create_article ? (
           <a className="primary-button" href="/articles/new">
             Написать
           </a>
+        ) : currentUser ? (
+          <span className="locked-action" title="Нужен рейтинг 0 или выше">
+            Написать
+          </span>
         ) : null}
         {currentUser ? (
-          <form action={logout} className="user-chip">
-            <img
-              className="avatar"
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.user.id}`}
-              alt=""
-            />
-            <span>{currentUser.user.display_name || currentUser.user.email}</span>
-            <button type="submit">Выйти</button>
-          </form>
+          <details className="user-menu">
+            <summary>
+              <img className="avatar" src={currentUser.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.user.id}`} alt="" />
+              <span>{currentUser.user.display_name || currentUser.user.username || currentUser.user.email}</span>
+            </summary>
+            <div className="user-menu-panel">
+              <a href={currentUser.user.username ? `/profiles/${currentUser.user.username}` : "/profile/me"}>Профиль</a>
+              <ThemeToggle />
+              <a href="/articles/my">Мои статьи</a>
+              <a href="/bookmarks">Закладки</a>
+              {currentUser.capabilities.can_moderate ? <a href="/moderation">Модерация</a> : null}
+              <a href="/chat">Чат</a>
+              <form action={logout}>
+                <button type="submit">Выйти</button>
+              </form>
+            </div>
+          </details>
         ) : (
           <a className="primary-button" href="/login">
             Войти

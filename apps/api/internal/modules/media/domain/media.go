@@ -9,6 +9,7 @@ var (
 	ErrInvalidFile  = errors.New("invalid media file")
 	ErrFileTooLarge = errors.New("media file too large")
 	ErrFileNotFound = errors.New("media file not found")
+	ErrNoPreview    = errors.New("media preview is not available")
 )
 
 const (

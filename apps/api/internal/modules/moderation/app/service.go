@@ -60,6 +60,21 @@ func (s *Service) Approve(ctx context.Context, actor accessdomain.Principal, sub
 	return mapSubmission(submission), nil
 }
 
+func (s *Service) ListThreads(ctx context.Context, actor accessdomain.Principal, submissionID string) (dto.ThreadListResponse, error) {
+	if !actor.CanModerate() {
+		return dto.ThreadListResponse{}, httpx.Forbidden("Недостаточно прав для модерации")
+	}
+	threads, err := s.repo.ListThreads(ctx, submissionID)
+	if err != nil {
+		return dto.ThreadListResponse{}, mapModerationError(err)
+	}
+	items := make([]dto.ThreadResponse, 0, len(threads))
+	for _, thread := range threads {
+		items = append(items, mapThread(thread))
+	}
+	return dto.ThreadListResponse{Items: items}, nil
+}
+
 func (s *Service) Reject(ctx context.Context, actor accessdomain.Principal, submissionID string, request dto.RejectSubmissionRequest) (dto.SubmissionResponse, error) {
 	if !actor.IsAdmin() {
 		return dto.SubmissionResponse{}, httpx.Forbidden("Отклонить статью может только администратор")
@@ -109,6 +124,17 @@ func (s *Service) ResolveThread(ctx context.Context, actor accessdomain.Principa
 	return mapThread(thread), nil
 }
 
+func (s *Service) ReopenThread(ctx context.Context, actor accessdomain.Principal, threadID string, request dto.ReopenThreadRequest) (dto.ThreadResponse, error) {
+	if !actor.CanModerate() {
+		return dto.ThreadResponse{}, httpx.Forbidden("Недостаточно прав для модерации")
+	}
+	thread, err := s.repo.ReopenThread(ctx, ports.ReopenThreadInput{ThreadID: threadID, ActorID: actor.UserID, Reason: request.Reason})
+	if err != nil {
+		return dto.ThreadResponse{}, mapModerationError(err)
+	}
+	return mapThread(thread), nil
+}
+
 func mapSubmission(submission domain.Submission) dto.SubmissionResponse {
 	return dto.SubmissionResponse{
 		ID:              submission.ID,
@@ -117,6 +143,8 @@ func mapSubmission(submission domain.Submission) dto.SubmissionResponse {
 		AuthorID:        submission.AuthorID,
 		Status:          string(submission.Status),
 		RejectionReason: submission.RejectionReason,
+		ApprovalCount:   submission.ApprovalCount,
+		OpenThreadCount: submission.OpenThreadCount,
 		CreatedAt:       submission.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:       submission.UpdatedAt.Format(time.RFC3339),
 	}
@@ -144,6 +172,10 @@ func mapModerationError(err error) error {
 		return httpx.NewError(404, httpx.CodeNotFound, "Объект модерации не найден")
 	case errors.Is(err, domain.ErrAlreadyDecided):
 		return httpx.NewError(409, httpx.CodeConflict, "Модерация уже завершена")
+	case errors.Is(err, domain.ErrOpenThreads):
+		return httpx.NewError(409, httpx.CodeConflict, "Нельзя завершить модерацию, пока открыты треды")
+	case errors.Is(err, domain.ErrAuthorAction):
+		return httpx.Forbidden("Автор статьи не может выполнять это действие модерации")
 	default:
 		return err
 	}

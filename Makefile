@@ -37,10 +37,10 @@ web-lint:
 	npm run web:lint
 
 infra-up:
-	docker compose -f $(COMPOSE_FILE) up -d postgres meilisearch
+	docker compose -f $(COMPOSE_FILE) up -d postgres meilisearch minio
 
 infra-down:
 	docker compose -f $(COMPOSE_FILE) down
 
 infra-logs:
-	docker compose -f $(COMPOSE_FILE) logs -f postgres meilisearch
+	docker compose -f $(COMPOSE_FILE) logs -f postgres meilisearch minio
